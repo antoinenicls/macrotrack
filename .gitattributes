@@ -1,0 +1,7 @@
+# Normalise les fins de ligne : LF dans le repo, quelle que soit la plateforme.
+* text=auto eol=lf
+
+# Fichiers binaires — jamais de conversion.
+*.png binary
+*.svg text
+*.ico binary

@@ -1,0 +1,27 @@
+# Dépendances
+node_modules
+
+# Build / artefacts
+dist
+dist-ssr
+dev-dist
+*.local
+.vite
+*.tsbuildinfo
+
+# Déploiement Vercel (config locale liée au compte)
+.vercel
+
+# Logs & temporaires
+*.log
+tmp_*
+
+# OS / éditeur
+.DS_Store
+
+# Réglages Claude Code locaux (permissions, propres à la machine)
+.claude/settings.local.json
+
+# Variables d'environnement (jamais committées, sauf l'exemple)
+.env*
+!.env.example

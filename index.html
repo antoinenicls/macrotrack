@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1" />
+    <meta name="theme-color" content="#EEF3FE" />
+    <!-- CRITIQUE : force iOS Safari à utiliser le rendu CLAIR, sinon
+         WebKit applique des styles dark par défaut quand l'iPhone est en mode sombre. -->
+    <meta name="color-scheme" content="light only" />
+    <meta name="supported-color-schemes" content="light" />
+
+    <!-- iOS PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="MacroTrack" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+
+    <!-- Force bg cream inline : impossible à surcharger par un CSS en cache.
+         Si tout casse, au moins le fond reste lisible. -->
+    <style>
+      /* Force light scheme : indique au navigateur que cette app est pensée light only. */
+      :root, html, body { color-scheme: light only; }
+      html, body { background-color: #EEF3FE !important; color: #111827 !important; }
+    </style>
+
+    <!-- Kill switch : unregistre tout service worker existant qui pourrait
+         servir une version stale du CSS/JS. Garantit que la prochaine ouverture
+         charge depuis le serveur, pas depuis le cache PWA. -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          regs.forEach(function(r) { r.unregister(); });
+        }).catch(function() {});
+        if (window.caches && caches.keys) {
+          caches.keys().then(function(keys) {
+            keys.forEach(function(k) { caches.delete(k); });
+          }).catch(function() {});
+        }
+      }
+    </script>
+
+    <title>MacroTrack</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

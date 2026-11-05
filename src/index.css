@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===========================================================================
+ *  Palette inspirée des références utilisateur — LIGHT ONLY.
+ *  Pas de mode sombre. iOS Safari force-light via color-scheme + meta.
+ * =========================================================================== */
+:root {
+  color-scheme: light only;
+
+  /* —— Surfaces (crème bleutée, accordée au logo) —— */
+  --c-bg:         238 243 254;  /* #EEF3FE — pale blue cream */
+  --c-surface:    255 255 255;  /* cartes pure white */
+  --c-surface-hi: 245 248 255;  /* #F5F8FF — champs très clairs */
+  --c-border:     216 227 248;  /* #D8E3F8 */
+
+  /* —— Texte (noir profond pour grand contraste) —— */
+  --c-text:       17 24 39;     /* #111827 — quasi noir */
+  --c-text-muted: 107 114 128;  /* #6B7280 — gris neutre */
+
+  /* —— Brand : le bleu commun à GymTrack et MacroTrack —— */
+  --c-brand:      10 132 255;   /* #0A84FF — aplats (boutons), = le bleu du logo */
+  --c-brand-hi:   0 96 223;     /* #0060DF — texte/accents, plus contrasté */
+
+  /* —— États —— */
+  --c-success:    138 198 64;   /* vert : sémantique « ça va », indépendant du brand */
+  --c-warn:       243 205 63;
+  --c-danger:     243 99 99;
+
+  /* —— Macros (kcal = brand ; les 3 macros restent distinctes pour la lisibilité) —— */
+  --c-kcal:       10 132 255;   /* bleu (brand) */
+  --c-protein:    243 99 99;    /* coral */
+  --c-carbs:      244 165 75;   /* orange peach */
+  --c-fat:        178 160 224;  /* lavande */
+
+  /* —— Couleurs des cartes par repas —— */
+  --c-slot-pd:    164 216 91;  /* petit-déj : vert lime (hors identité bleue, cf. MealCard) */
+  --c-slot-dj:    243 216 67;   /* déjeuner : jaune */
+  --c-slot-dn:    244 165 113;  /* dîner : peach orange */
+  --c-slot-co:    178 160 224;  /* collation : lavande */
+
+  /* —— Track des anneaux/progress —— */
+  --c-track: 17 24 39;
+  --track-alpha: 0.06;
+
+  /* —— Ombre cartes propre —— */
+  --shadow-card: 0 2px 6px rgba(17, 24, 39, 0.04), 0 8px 24px -8px rgba(17, 24, 39, 0.08);
+}
+
+/* ===========================================================================
+ *  Reset / base + typographie premium
+ *  Hardcoded en plus des vars pour bulletproof anti-cache et anti-dark-mode.
+ * =========================================================================== */
+html {
+  font-size: 17px;
+  color-scheme: light only;
+  background-color: #EEF3FE;
+  background-color: rgb(var(--c-bg));
+}
+
+html, body, #root {
+  height: 100%;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  overscroll-behavior-x: none;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: theme('fontFamily.sans');
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  background-color: #EEF3FE;
+  background-color: rgb(var(--c-bg));
+  color: #111827;
+  color: rgb(var(--c-text));
+  letter-spacing: -0.01em;
+}
+
+#root { background-color: #EEF3FE; }
+
+h1, h2, h3, h4 { letter-spacing: -0.028em; color: #111827; color: rgb(var(--c-text)); }
+
+input, select, textarea, button { font-size: 16px; color: inherit; }
+button { -webkit-appearance: none; appearance: none; }
+
+/* ===========================================================================
+ *  Safe-area helpers
+ * =========================================================================== */
+@layer utilities {
+  .pt-safe   { padding-top:    env(safe-area-inset-top); }
+  .pb-safe   { padding-bottom: env(safe-area-inset-bottom); }
+  .pl-safe   { padding-left:   env(safe-area-inset-left); }
+  .pr-safe   { padding-right:  env(safe-area-inset-right); }
+  .mt-safe   { margin-top:    env(safe-area-inset-top); }
+
+  .tap        { min-height: 44px; min-width: 44px; }
+  .no-select  { user-select: none; -webkit-user-select: none; }
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: rgb(var(--c-border)); border-radius: 8px; }
+
+/* ===========================================================================
+ *  Override BULLETPROOF de tous les bg/text Tailwind utilisés dans l'app
+ *  Garantit que même si une CSS variable foire, les classes critiques restent
+ *  clairs avec texte foncé. Anti-cache + anti-dark-mode iOS.
+ * =========================================================================== */
+.bg-bg            { background-color: #EEF3FE !important; }
+.bg-surface       { background-color: #FFFFFF !important; }
+.bg-surface-hi    { background-color: #F5F8FF !important; }
+.text-text        { color: #111827 !important; }
+.text-text-muted  { color: #6B7280 !important; }
+.border-border    { border-color: #D8E3F8 !important; }
+.text-brand       { color: #0060DF !important; }
+.bg-brand         { background-color: #0A84FF !important; color: #FFFFFF !important; }
+.bg-brand\/15     { background-color: rgba(10, 132, 255, 0.15) !important; }
+.bg-brand\/10     { background-color: rgba(10, 132, 255, 0.10) !important; }
+.border-brand\/30 { border-color: rgba(10, 132, 255, 0.30) !important; }
+.border-brand\/40 { border-color: rgba(10, 132, 255, 0.40) !important; }
+.text-success     { color: #8AC640 !important; }
+.text-warn        { color: #E69F1E !important; }
+.text-danger      { color: #E55858 !important; }
+
+/* Validation "coché" : pop + fondu court de la case verte avant la bascule au panier. */
+@keyframes check-pop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  55%  { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+.animate-check-pop { animation: check-pop 0.14s cubic-bezier(0.34, 1.56, 0.64, 1); }

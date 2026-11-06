@@ -12,6 +12,7 @@ import { PlanView } from './PlanView';
 import { TargetSafetyPanel } from './TargetSafetyPanel';
 import { EstimateCarrySettings } from './EstimateCarrySettings';
 import { DataPanel } from './DataPanel';
+import { FeedbackCard } from '@/features/feedback/FeedbackCard';
 
 type Section = 'objectif' | 'aliments' | 'semaine' | 'reglages';
 
@@ -19,7 +20,7 @@ const SECTIONS: { value: Section; label: string; intro: string }[] = [
   { value: 'objectif', label: 'Objectif', intro: 'Qui tu es et ce que tu vises : tes calories en découlent.' },
   { value: 'aliments', label: 'Aliments', intro: 'Ce que tu manges et quand : ton plan est construit avec.' },
   { value: 'semaine',  label: 'Semaine',  intro: 'Le résultat : tes 7 menus et ce qu\'ils couvrent.' },
-  { value: 'reglages', label: 'Réglages', intro: 'Sécurités, repas mangés dehors, sauvegarde.' }
+  { value: 'reglages', label: 'Réglages', intro: 'Sécurités, repas mangés dehors, sauvegarde, ton avis.' }
 ];
 
 /** Dernier onglet ouvert, gardé le temps de la session (on revient où on était). */
@@ -30,7 +31,7 @@ let lastSection: Section = 'objectif';
  *  1. Objectif : profil (âge, taille, activité, %MG) + objectif (sèche/maintien/prise, rythme, pause)
  *  2. Aliments : repas de la journée, régime et allergies, mes aliments, ingrédients d'appoint
  *  3. Semaine  : plan de la semaine (lecture seule) + bilan de couverture
- *  4. Réglages : garde-fous de la cible, repas mangés dehors, sauvegarde et données
+ *  4. Réglages : garde-fous de la cible, repas mangés dehors, sauvegarde et données, avis
  * Chaque carte affiche un résumé de son état, visible même repliée.
  */
 export function PlanPage() {
@@ -79,6 +80,7 @@ export function PlanPage() {
           <TargetSafetyPanel />
           <EstimateCarrySettings />
           <DataPanel />
+          <FeedbackCard />
         </>
       )}
     </div>

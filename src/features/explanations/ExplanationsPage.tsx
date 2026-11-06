@@ -11,6 +11,7 @@ import { fmtKcal } from '@/lib/format';
 import { haptic } from '@/lib/haptic';
 import { GROUPS, buildGuide, computeGuideContext, type GroupId } from './guideSections';
 import { FOCUS_RING, GuideSection, Stat, normalize } from './guideUi';
+import { FeedbackCard } from '@/features/feedback/FeedbackCard';
 
 type Filter = GroupId | 'all';
 
@@ -237,6 +238,8 @@ export function ExplanationsPage() {
           ))}
         </section>
       ))}
+
+      {!searching && <FeedbackCard />}
     </div>
   );
 }

@@ -371,7 +371,7 @@ Tendance (kg/sem) = pente de la droite ajustée
             <>La liste est rangée <B>par rayon</B>, avec des quantités d'achat concrètes (« 9 bananes », « 2 boîtes », « 1,1 kg »).</>,
             <>Touche une ligne pour la mettre <B>dans le panier</B>.</>,
             <>L'icône colis la marque <B>déjà à la maison</B> : elle est déduite et ne revient pas.</>,
-            <><B>Ajoute tout le reste</B> (capsules de café, déodorant, lessive…) avec le champ « Ajouter » : l'article se range tout seul dans son rayon, reste dans la liste tant qu'il n'est pas pris, puis disparaît la semaine de courses suivante. Les articles déjà achetés reviennent en un tap ; le crayon permet de les renommer, changer de rayon ou les retirer.</>,
+            <><B>Ajoute tout le reste</B> (capsules de café, déodorant, lessive…) avec « Ajouter un article » : l'article se range tout seul dans son rayon, reste dans la liste tant qu'il n'est pas pris, puis disparaît la semaine de courses suivante. « Déjà acheté » garde ton historique pour les remettre en un tap (ou les en retirer) ; le crayon permet de renommer un article, changer son rayon ou le retirer.</>,
             <><B>Séances prévues</B> ajoute galettes, miel et bananes pour les séances de la semaine pas encore déclarées.</>
           ]} />
         </>

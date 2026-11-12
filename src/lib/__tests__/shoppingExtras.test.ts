@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   addExtra, guessAisle, normalizeName, purgeBought, recentSuggestions, editExtra,
-  setExtraChecked, uncheckAllExtras, type ShoppingState
+  setExtraChecked, uncheckAllExtras, forgetRecent, isInList, type ShoppingState
 } from '../shoppingExtras';
 
 const empty: ShoppingState = { extras: [], recents: [] };
@@ -110,5 +110,20 @@ describe('editExtra / recentSuggestions / uncheckAll', () => {
   it('tout décocher', () => {
     const checked = setExtraChecked(base.state.extras, 'a', '2026-11-09');
     expect(uncheckAllExtras(checked)[0].checkedWeek).toBeUndefined();
+  });
+});
+
+describe('forgetRecent / isInList', () => {
+  const recents = [{ name: 'Capsules café', aisle: 'boissons' as const }, { name: 'Déodorant', aisle: 'hygiene' as const }];
+  it('oublie un récent sans tenir compte de la casse ni des accents', () => {
+    expect(forgetRecent(recents, 'deodorant').map((r) => r.name)).toEqual(['Capsules café']);
+  });
+  it('renvoie le même tableau si rien à oublier', () => {
+    expect(forgetRecent(recents, 'Lessive')).toBe(recents);
+  });
+  it('isInList', () => {
+    const extras = [{ id: 'a', name: 'Capsules café', aisle: 'boissons' as const, addedAt: 1 }];
+    expect(isInList(extras, 'capsules CAFE')).toBe(true);
+    expect(isInList(extras, 'Déodorant')).toBe(false);
   });
 });

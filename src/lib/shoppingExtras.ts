@@ -223,3 +223,16 @@ export function recentSuggestions(state: ShoppingState, query: string, limit = 8
     })
     .slice(0, limit);
 }
+
+/** Oublie un article de l'historique « Déjà acheté » (sans toucher à la liste en cours). */
+export function forgetRecent(recents: ShoppingRecent[], name: string): ShoppingRecent[] {
+  const norm = normalizeName(name);
+  const next = recents.filter((r) => normalizeName(r.name) !== norm);
+  return next.length === recents.length ? recents : next;
+}
+
+/** Vrai si un article de ce nom est déjà dans la liste en cours. */
+export function isInList(extras: ShoppingExtra[], name: string): boolean {
+  const norm = normalizeName(name);
+  return extras.some((e) => normalizeName(e.name) === norm);
+}

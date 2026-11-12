@@ -17,7 +17,7 @@ import { getTemplateForDate } from '@/lib/templates';
 import { applyCarryOver, carryOverFor, carrySettingsOf, planKcal } from '@/lib/estimateRebalance';
 import { aisleForFood, AISLE_EMOJI, AISLE_LABEL, AISLE_ORDER, type Aisle } from '@/lib/aisles';
 import {
-  addExtra, editExtra, purgeBought, removeExtra, setExtraChecked, uncheckAllExtras,
+  addExtra, editExtra, forgetRecent, purgeBought, removeExtra, setExtraChecked, uncheckAllExtras,
   type ShoppingExtra, type ShoppingRecent
 } from '@/lib/shoppingExtras';
 import { uid } from '@/lib/id';
@@ -241,15 +241,16 @@ export function WeekView({ open, onClose }: Props) {
   /** Ajout d'un article « en plus » (saisi, ou repris des récents avec son rayon). */
   const addExtraItem = (name: string, recent?: ShoppingRecent) => {
     haptic('light');
-    let outcome: 'added' | 'duplicate' | 'empty' = 'empty';
-    let label = '';
+    let result: ReturnType<typeof addExtra> | null = null;
     void updateShopping((cur) => {
-      const r = addExtra(cur, name, uid(), Date.now(), recent?.aisle);
-      outcome = r.status;
-      if (r.status !== 'empty') label = r.extra.name;
-      return r.state;
+      result = addExtra(cur, name, uid(), Date.now(), recent?.aisle);
+      return result.state;
     }).then(() => {
-      if (outcome === 'duplicate') toast(`« ${label} » est déjà dans la liste`, 'info');
+      const r = result as ReturnType<typeof addExtra> | null;
+      if (!r || r.status === 'empty') return;
+      // Le champ se referme après l'ajout : la confirmation dit où trouver l'article.
+      if (r.status === 'duplicate') toast(`« ${r.extra.name} » est déjà dans la liste`, 'info');
+      else toast(`« ${r.extra.name} » ajouté · ${AISLE_EMOJI[r.extra.aisle]} ${AISLE_LABEL[r.extra.aisle]}`, 'success');
     });
   };
 
@@ -805,7 +806,14 @@ export function WeekView({ open, onClose }: Props) {
 
         {/* Ajout libre : tout ce qui n'est pas dans le plan, pour une seule liste de courses */}
         {isShoppingWeek && (
-          <ShoppingAddBar state={{ extras, recents }} onAdd={addExtraItem} />
+          <ShoppingAddBar
+            state={{ extras, recents }}
+            onAdd={addExtraItem}
+            onForget={(name) => void updateShopping((cur) => {
+              const next = forgetRecent(cur.recents, name);
+              return next === cur.recents ? cur : { ...cur, recents: next };
+            })}
+          />
         )}
 
         {total === 0 ? (

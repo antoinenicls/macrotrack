@@ -29,14 +29,18 @@ export function Sheet({ open, onClose, title, children, fullScreen = false }: Pr
   // la sheet de la hauteur du clavier et on borne sa hauteur à la zone visible.
   const [kbInset, setKbInset] = useState(0);
   const [vvHeight, setVvHeight] = useState<number | null>(null);
+  // Décalage de la zone visible : à l'ouverture du clavier, iOS fait défiler la page pour
+  // montrer le champ (offsetTop > 0) même si le body est figé.
+  const [vvTop, setVvTop] = useState(0);
 
   useEffect(() => {
     const vv = window.visualViewport;
-    if (!open || !vv) { setKbInset(0); setVvHeight(null); return; }
+    if (!open || !vv) { setKbInset(0); setVvHeight(null); setVvTop(0); return; }
     const update = () => {
       const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
       setKbInset(inset);
       setVvHeight(vv.height);
+      setVvTop(vv.offsetTop);
     };
     update();
     vv.addEventListener('resize', update);
@@ -46,6 +50,7 @@ export function Sheet({ open, onClose, title, children, fullScreen = false }: Pr
       vv.removeEventListener('scroll', update);
       setKbInset(0);
       setVvHeight(null);
+      setVvTop(0);
     };
   }, [open]);
 
@@ -92,14 +97,24 @@ export function Sheet({ open, onClose, title, children, fullScreen = false }: Pr
               'fixed inset-x-0 bottom-0 z-50 bg-surface border-t border-border flex flex-col',
               fullScreen ? 'top-0 rounded-none border-t-0' : 'rounded-t-3xl max-h-[88vh]'
             ].join(' ')}
-            style={{
-              // Remonte la sheet au-dessus du clavier
-              bottom: kbInset,
-              // Borne la hauteur à la zone visible (clavier ouvert) pour rester scrollable
-              maxHeight: vvHeight != null
-                ? `${vvHeight * (fullScreen ? 1 : 0.92)}px`
-                : undefined
-            }}
+            style={
+              fullScreen && vvHeight != null
+                ? {
+                    // Plein écran : calé EXACTEMENT sur la zone visible (entre le haut de
+                    // l'écran et le clavier). Avec `top: 0` + hauteur max, la sheet restait
+                    // ancrée en haut de la page défilée par iOS et s'arrêtait trop tôt :
+                    // le bas de la zone visible laissait voir la page derrière.
+                    top: vvTop,
+                    bottom: 'auto',
+                    height: `${vvHeight}px`
+                  }
+                : {
+                    // Remonte la sheet au-dessus du clavier
+                    bottom: kbInset,
+                    // Borne la hauteur à la zone visible (clavier ouvert) pour rester scrollable
+                    maxHeight: vvHeight != null ? `${vvHeight * 0.92}px` : undefined
+                  }
+            }
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}

@@ -19,6 +19,12 @@ interface Props {
 export function ShoppingAddBar({ state, onAdd }: Props) {
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  // Une fois le clavier ouvert (et la sheet recalée), on fait entrer toute la carte
+  // dans la zone visible : champ, rayon deviné et ajouts rapides.
+  const revealCard = () => {
+    window.setTimeout(() => cardRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 350);
+  };
   const trimmed = value.trim();
   const aisle = trimmed ? guessAisle(trimmed, state.recents) : null;
   const suggestions = recentSuggestions(state, value, trimmed ? 6 : 8);
@@ -31,6 +37,7 @@ export function ShoppingAddBar({ state, onAdd }: Props) {
   };
 
   return (
+    <div ref={cardRef} className="scroll-mt-2 scroll-mb-4">
     <Card className="!p-0 overflow-hidden">
       <form
         onSubmit={(e) => { e.preventDefault(); submit(); }}
@@ -41,6 +48,7 @@ export function ShoppingAddBar({ state, onAdd }: Props) {
           ref={inputRef}
           value={value}
           onChange={(e) => setValue(e.target.value)}
+          onFocus={revealCard}
           placeholder="Ajouter : café, déodorant, lessive…"
           aria-label="Ajouter un article à la liste de courses"
           enterKeyHint="done"
@@ -93,5 +101,6 @@ export function ShoppingAddBar({ state, onAdd }: Props) {
         </div>
       )}
     </Card>
+    </div>
   );
 }

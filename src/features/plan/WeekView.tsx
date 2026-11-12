@@ -97,6 +97,12 @@ export function WeekView({ open, onClose }: Props) {
   const toast = useUIStore((s) => s.toast);
   const [openExtraId, setOpenExtraId] = useState<string | null>(null);
   const [extraNameDraft, setExtraNameDraft] = useState('');
+  // Retrait en deux temps : 1er appui arme le bouton (rouge plein), 2e appui retire.
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Changer de rayon déplace la ligne : on la suit à l'écran pour ne jamais la perdre.
+  const extraRefs = useRef(new Map<string, HTMLLIElement>());
+  const [revealExtraId, setRevealExtraId] = useState<string | null>(null);
   const extras = settings?.shoppingExtras ?? NO_EXTRAS;
   const recents = settings?.shoppingRecents ?? NO_RECENTS;
 
@@ -247,9 +253,27 @@ export function WeekView({ open, onClose }: Props) {
     });
   };
 
+  const disarmDelete = () => {
+    if (confirmTimer.current) { clearTimeout(confirmTimer.current); confirmTimer.current = null; }
+    setConfirmDeleteId(null);
+  };
+  useEffect(() => () => { if (confirmTimer.current) clearTimeout(confirmTimer.current); }, []);
+
+  // Après un changement de rayon, la ligne a été re-rendue ailleurs : on la ramène
+  // dans la zone visible (avec l'en-tête de son nouveau rayon, cf. scroll-mt).
+  useEffect(() => {
+    if (!revealExtraId) return;
+    const raf = requestAnimationFrame(() => {
+      extraRefs.current.get(revealExtraId)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
+    const t = setTimeout(() => setRevealExtraId(null), 1200);
+    return () => { cancelAnimationFrame(raf); clearTimeout(t); };
+  }, [revealExtraId, extras]);
+
   const toggleExtraEditor = (extra: ShoppingExtra) => {
     haptic('light');
     setOpenStockId(null);
+    disarmDelete();
     setOpenExtraId((prev) => {
       const next = prev === extra.id ? null : extra.id;
       if (next) setExtraNameDraft(extra.name);
@@ -261,10 +285,26 @@ export function WeekView({ open, onClose }: Props) {
     void updateShopping((cur) => editExtra(cur, extra.id, { name: extraNameDraft }));
   };
   const setExtraAisle = (extra: ShoppingExtra, aisle: Aisle) => {
+    if (aisle === extra.aisle) return;
     haptic('selection');
+    disarmDelete();
     void updateShopping((cur) => editExtra(cur, extra.id, { aisle }));
+    setRevealExtraId(extra.id);
+  };
+  /** 1er appui : arme (3 s pour confirmer). 2e appui : retire. */
+  const pressDeleteExtra = (extra: ShoppingExtra) => {
+    if (confirmDeleteId !== extra.id) {
+      haptic('warning');
+      if (confirmTimer.current) clearTimeout(confirmTimer.current);
+      setConfirmDeleteId(extra.id);
+      confirmTimer.current = setTimeout(() => { setConfirmDeleteId(null); confirmTimer.current = null; }, 3000);
+      return;
+    }
+    disarmDelete();
+    deleteExtra(extra);
   };
   const deleteExtra = (extra: ShoppingExtra) => {
+    haptic('medium');
     setOpenExtraId(null);
     clearPending(`x:${extra.id}`);
     void updateShopping((cur) => ({ ...cur, extras: removeExtra(cur.extras, extra.id) }));
@@ -433,8 +473,14 @@ export function WeekView({ open, onClose }: Props) {
     ) : (
       <span className="shrink-0 w-6 h-6 rounded-full border-2" style={{ borderColor: '#C9D3E6' }} />
     );
+    const justMoved = revealExtraId === extra.id;
     return (
-      <li key={key}>
+      <li
+        key={key}
+        ref={(el) => { if (el) extraRefs.current.set(extra.id, el); else extraRefs.current.delete(extra.id); }}
+        // scroll-mt : garde l'en-tête du rayon visible quand on ramène la ligne à l'écran.
+        className={`scroll-mt-10 scroll-mb-4 transition-colors duration-500 ${justMoved ? 'bg-brand/10' : editing ? 'bg-[#F7F9FE]' : ''}`}
+      >
         <div className="flex items-center">
           <button
             onClick={() => toggleExtra(extra)}
@@ -456,7 +502,7 @@ export function WeekView({ open, onClose }: Props) {
         </div>
 
         {editing && (
-          <div className="px-4 pb-3 space-y-2.5">
+          <div className="px-4 pb-3 space-y-2">
             <input
               value={extraNameDraft}
               onChange={(e) => setExtraNameDraft(e.target.value)}
@@ -467,32 +513,37 @@ export function WeekView({ open, onClose }: Props) {
               maxLength={60}
               className="w-full h-11 px-3 rounded-xl bg-surface-hi border border-border text-[15px] text-text focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
             />
-            <div className="space-y-1.5">
-              <div className="px-1 text-[11px] font-semibold text-text-muted">Rayon</div>
-              <div className="flex flex-wrap gap-1.5">
-                {AISLE_ORDER.map((a) => {
-                  const active = a === extra.aisle;
-                  return (
-                    <button
-                      key={a}
-                      type="button"
-                      onClick={() => setExtraAisle(extra, a)}
-                      aria-pressed={active}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[12px] font-medium tap ${active ? 'bg-brand text-white' : 'text-text'}`}
-                      style={active ? undefined : { backgroundColor: '#F4F7FD', border: '1px solid #E3EAF7' }}
-                    >
-                      <span className="leading-none">{AISLE_EMOJI[a]}</span>
-                      {AISLE_LABEL[a]}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="danger" size="sm" leadingIcon={<Trash2 size={14} />} onClick={() => deleteExtra(extra)}>
-                Retirer de la liste
-              </Button>
-              <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setOpenExtraId(null)}>Fermer</Button>
+            {/* Rayon : menu déroulant natif (roue iOS), compact et lisible */}
+            <label className="relative flex items-center h-11 rounded-xl bg-surface-hi border border-border focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/30">
+              <span className="pl-3 pr-2 text-xs font-semibold text-text-muted shrink-0">Rayon</span>
+              <span className="flex-1 min-w-0 flex items-center gap-1.5 text-[15px] font-medium text-text">
+                <span className="leading-none">{AISLE_EMOJI[extra.aisle]}</span>
+                <span className="break-words leading-tight">{AISLE_LABEL[extra.aisle]}</span>
+              </span>
+              <ChevronDown size={16} className="shrink-0 mr-3 text-text-muted" />
+              <select
+                value={extra.aisle}
+                onChange={(e) => setExtraAisle(extra, e.target.value as Aisle)}
+                aria-label={`Rayon de ${extra.name}`}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              >
+                {AISLE_ORDER.map((a) => (
+                  <option key={a} value={a}>{AISLE_EMOJI[a]} {AISLE_LABEL[a]}</option>
+                ))}
+              </select>
+            </label>
+            <div className="flex items-center gap-2 pt-0.5">
+              <button
+                type="button"
+                onClick={() => pressDeleteExtra(extra)}
+                className={`inline-flex items-center gap-2 h-9 px-3 rounded-xl text-sm font-semibold tap transition-colors ${
+                  confirmDeleteId === extra.id ? 'bg-danger text-white' : 'bg-danger/15 text-danger'
+                }`}
+              >
+                <Trash2 size={14} className="shrink-0" />
+                {confirmDeleteId === extra.id ? 'Toucher pour confirmer' : 'Retirer'}
+              </button>
+              <Button variant="ghost" size="sm" className="ml-auto" onClick={() => { disarmDelete(); setOpenExtraId(null); }}>Fermer</Button>
             </div>
           </div>
         )}

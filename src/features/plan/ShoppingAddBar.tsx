@@ -82,7 +82,6 @@ export function ShoppingAddBar({ state, onAdd, onForget }: Props) {
             {aisle && (
               <div className="px-1 text-xs text-text-muted">
                 Rayon : <span className="font-medium text-text">{AISLE_EMOJI[aisle]} {AISLE_LABEL[aisle]}</span>
-                <span className="opacity-80"> · modifiable ensuite</span>
               </div>
             )}
 
@@ -138,7 +137,7 @@ export function ShoppingAddBar({ state, onAdd, onForget }: Props) {
               </span>
               <span className="flex-1 min-w-0">
                 <span className="block text-[15px] font-semibold text-brand">Ajouter un article</span>
-                <span className="block text-xs text-text-muted mt-0.5">Café, hygiène, entretien… tout dans une seule liste</span>
+                <span className="block text-xs text-text-muted mt-0.5">Café, hygiène, entretien…</span>
               </span>
             </button>
 

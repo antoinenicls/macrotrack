@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sheet, SegmentedControl, Card, EmptyState, NumberInput, Button, ProgressBar } from '@/components/ui';
-import { ChevronDown, CalendarRange, Check, Package, Minus, Plus, Dumbbell } from 'lucide-react';
+import { ChevronDown, CalendarRange, Check, Package, Minus, Plus, Dumbbell, Pencil, Trash2 } from 'lucide-react';
 import { haptic } from '@/lib/haptic';
 import { useProfileStore } from '@/store/profileStore';
 import { useFoodsStore } from '@/store/foodsStore';
@@ -15,7 +15,14 @@ import { macrosForItem, sumMacros, toNativeGrams } from '@/lib/nutrition';
 import { fmtG, fmtKcal, describeServing, rawEquivLabel } from '@/lib/format';
 import { getTemplateForDate } from '@/lib/templates';
 import { applyCarryOver, carryOverFor, carrySettingsOf, planKcal } from '@/lib/estimateRebalance';
-import { aisleForFood, AISLE_LABEL, AISLE_ORDER, type Aisle } from '@/lib/aisles';
+import { aisleForFood, AISLE_EMOJI, AISLE_LABEL, AISLE_ORDER, type Aisle } from '@/lib/aisles';
+import {
+  addExtra, editExtra, purgeBought, removeExtra, setExtraChecked, uncheckAllExtras,
+  type ShoppingExtra, type ShoppingRecent
+} from '@/lib/shoppingExtras';
+import { uid } from '@/lib/id';
+import { useUIStore } from '@/store/uiStore';
+import { ShoppingAddBar } from './ShoppingAddBar';
 import { toBuyGrams, isFullyStocked } from '@/lib/pantry';
 import { isTrainingDay, pendingTrainingItems, DEFAULT_SESSIONS_PER_WEEK } from '@/lib/trainingDay';
 import { isDiscrete } from '@/lib/portions';
@@ -42,16 +49,19 @@ interface AggregateLine {
   days: number;
 }
 
-/** Icône de rayon : repère visuel immédiat en magasin. */
-const AISLE_EMOJI: Record<Aisle, string> = {
-  'produce': '🥦',
-  'boucherie': '🥩',
-  'conserves': '🥫',
-  'cremerie': '🥛',
-  'epicerie-salee': '🍚',
-  'gouter': '🍫',
-  'complements': '💪'
-};
+/**
+ * Ligne de la liste de courses : un aliment du plan (quantité calculée) ou un article
+ * ajouté à la main (café, lessive…). Les deux se rangent dans les mêmes rayons.
+ */
+type ListLine =
+  | { kind: 'food'; key: string; line: AggregateLine }
+  | { kind: 'extra'; key: string; extra: ShoppingExtra };
+
+/** Référence stable quand aucun article n'a encore été ajouté (évite de recalculer à chaque rendu). */
+const NO_EXTRAS: ShoppingExtra[] = [];
+const NO_RECENTS: ShoppingRecent[] = [];
+
+const sortName = (l: ListLine) => (l.kind === 'food' ? l.line.food.name : l.extra.name);
 
 /** Poids d'achat lisible : « 650 g », « 1,2 kg ». */
 function fmtBuy(grams: number): string {
@@ -82,9 +92,17 @@ export function WeekView({ open, onClose }: Props) {
   const setPantryStock = useProfileStore((s) => s.setPantryStock);
   const [openStockId, setOpenStockId] = useState<string | null>(null);
   const [stockDraft, setStockDraft] = useState<number | ''>('');
+  // Articles ajoutés à la main : édition inline (libellé, rayon, suppression).
+  const updateShopping = useProfileStore((s) => s.updateShopping);
+  const toast = useUIStore((s) => s.toast);
+  const [openExtraId, setOpenExtraId] = useState<string | null>(null);
+  const [extraNameDraft, setExtraNameDraft] = useState('');
+  const extras = settings?.shoppingExtras ?? NO_EXTRAS;
+  const recents = settings?.shoppingRecents ?? NO_RECENTS;
 
   const toggleStock = (food: Food) => {
     haptic('light');
+    setOpenExtraId(null);
     setOpenStockId((prev) => {
       const next = prev === food.id ? null : food.id;
       if (next) setStockDraft(settings?.pantry?.[food.id] ?? '');
@@ -126,6 +144,18 @@ export function WeekView({ open, onClose }: Props) {
   // pas pour la semaine d'après dont on ne fait pas encore les courses.
   const isShoppingWeek = week === 'this';
   const storageKey = `mt-courses-checked-${dates[0]}`; // clé par vraie semaine → reset auto
+  /** Semaine de courses en cours (son lundi) : marque les articles « en plus » pris. */
+  const shoppingWeekKey = dayKey(anchorMonday);
+
+  // Nouvelle semaine de courses : les articles « en plus » pris la semaine d'avant
+  // disparaissent (comme les coches des aliments) ; ceux pas encore pris restent.
+  useEffect(() => {
+    if (!open) return;
+    void updateShopping((cur) => {
+      const kept = purgeBought(cur.extras, shoppingWeekKey);
+      return kept === cur.extras ? cur : { ...cur, extras: kept };
+    });
+  }, [open, shoppingWeekKey, updateShopping]);
 
   useEffect(() => {
     if (!open || !isShoppingWeek) { setChecked(new Set()); return; }
@@ -155,32 +185,96 @@ export function WeekView({ open, onClose }: Props) {
     try { localStorage.setItem(storageKey, JSON.stringify([...set])); } catch { /* quota / private mode */ }
   };
 
-  const clearPending = (foodId: string) => {
-    const t = pendingTimers.current.get(foodId);
-    if (t) { clearTimeout(t); pendingTimers.current.delete(foodId); }
-    setPending((p) => { if (!p.has(foodId)) return p; const n = new Set(p); n.delete(foodId); return n; });
+  const clearPending = (key: string) => {
+    const t = pendingTimers.current.get(key);
+    if (t) { clearTimeout(t); pendingTimers.current.delete(key); }
+    setPending((p) => { if (!p.has(key)) return p; const n = new Set(p); n.delete(key); return n; });
   };
 
-  const toggleChecked = (foodId: string) => {
+  /**
+   * Coche / décoche une ligne (aliment ou article ajouté). `commit(true)` la met dans le
+   * panier, `commit(false)` la remet au rayon.
+   */
+  const toggleLine = (key: string, isChecked: boolean, commit: (value: boolean) => void) => {
     // Déjà dans le panier → on décoche tout de suite (retour au rayon).
-    if (checked.has(foodId)) {
+    if (isChecked) {
       haptic('selection');
-      setChecked((prev) => { const next = new Set(prev); next.delete(foodId); persistChecked(next); return next; });
+      commit(false);
       return;
     }
     // Validation déjà en cours → un 2e tap annule.
-    if (pendingTimers.current.has(foodId)) { clearPending(foodId); return; }
+    if (pendingTimers.current.has(key)) { clearPending(key); return; }
 
     // Sinon : court indicateur dans la case (~200 ms), puis bascule dans le panier.
     haptic('selection');
-    setPending((p) => new Set(p).add(foodId));
+    setPending((p) => new Set(p).add(key));
     const timer = setTimeout(() => {
-      pendingTimers.current.delete(foodId);
-      setPending((p) => { const n = new Set(p); n.delete(foodId); return n; });
-      setChecked((prev) => { const next = new Set(prev).add(foodId); persistChecked(next); return next; });
+      pendingTimers.current.delete(key);
+      setPending((p) => { const n = new Set(p); n.delete(key); return n; });
+      commit(true);
       haptic('light');
     }, 200);
-    pendingTimers.current.set(foodId, timer);
+    pendingTimers.current.set(key, timer);
+  };
+
+  const toggleChecked = (foodId: string) =>
+    toggleLine(foodId, checked.has(foodId), (value) =>
+      setChecked((prev) => {
+        const next = new Set(prev);
+        if (value) next.add(foodId); else next.delete(foodId);
+        persistChecked(next);
+        return next;
+      })
+    );
+
+  const toggleExtra = (extra: ShoppingExtra) =>
+    toggleLine(`x:${extra.id}`, !!extra.checkedWeek, (value) =>
+      void updateShopping((cur) => ({ ...cur, extras: setExtraChecked(cur.extras, extra.id, value ? shoppingWeekKey : undefined) }))
+    );
+
+  /** Ajout d'un article « en plus » (saisi, ou repris des récents avec son rayon). */
+  const addExtraItem = (name: string, recent?: ShoppingRecent) => {
+    haptic('light');
+    let outcome: 'added' | 'duplicate' | 'empty' = 'empty';
+    let label = '';
+    void updateShopping((cur) => {
+      const r = addExtra(cur, name, uid(), Date.now(), recent?.aisle);
+      outcome = r.status;
+      if (r.status !== 'empty') label = r.extra.name;
+      return r.state;
+    }).then(() => {
+      if (outcome === 'duplicate') toast(`« ${label} » est déjà dans la liste`, 'info');
+    });
+  };
+
+  const toggleExtraEditor = (extra: ShoppingExtra) => {
+    haptic('light');
+    setOpenStockId(null);
+    setOpenExtraId((prev) => {
+      const next = prev === extra.id ? null : extra.id;
+      if (next) setExtraNameDraft(extra.name);
+      return next;
+    });
+  };
+  const commitExtraName = (extra: ShoppingExtra) => {
+    if (extraNameDraft.trim() === extra.name) return;
+    void updateShopping((cur) => editExtra(cur, extra.id, { name: extraNameDraft }));
+  };
+  const setExtraAisle = (extra: ShoppingExtra, aisle: Aisle) => {
+    haptic('selection');
+    void updateShopping((cur) => editExtra(cur, extra.id, { aisle }));
+  };
+  const deleteExtra = (extra: ShoppingExtra) => {
+    setOpenExtraId(null);
+    clearPending(`x:${extra.id}`);
+    void updateShopping((cur) => ({ ...cur, extras: removeExtra(cur.extras, extra.id) }));
+    toast(`« ${extra.name} » retiré`, 'info', {
+      action: {
+        label: 'Annuler',
+        onPress: () => void updateShopping((cur) =>
+          cur.extras.some((e) => e.id === extra.id) ? cur : { ...cur, extras: [...cur.extras, extra] })
+      }
+    });
   };
 
   const resetChecked = () => {
@@ -191,6 +285,10 @@ export function WeekView({ open, onClose }: Props) {
     setPending(new Set());
     setChecked(new Set());
     try { localStorage.removeItem(storageKey); } catch { /* noop */ }
+    void updateShopping((cur) => {
+      const next = uncheckAllExtras(cur.extras);
+      return next === cur.extras ? cur : { ...cur, extras: next };
+    });
   };
 
   // Charge les meals réels et fusionne avec le plan type pour les jours futurs ou vides
@@ -261,19 +359,21 @@ export function WeekView({ open, onClose }: Props) {
     return Array.from(map.values());
   }, [days, byId, sessionsPerWeek, sessionsCounted]);
 
-  // Regroupe la liste de courses par rayon (ordre de parcours en magasin)
-  const groupedAggregate = useMemo(() => {
-    const map = new Map<Aisle, AggregateLine[]>();
-    for (const line of aggregate) {
-      const aisle = aisleForFood(line.food);
+  // Regroupe la liste de courses par rayon (ordre de parcours en magasin). Les articles
+  // ajoutés à la main ne concernent que la semaine de courses (pas l'aperçu d'après).
+  const groupedLines = useMemo(() => {
+    const map = new Map<Aisle, ListLine[]>();
+    const push = (aisle: Aisle, l: ListLine) => {
       const arr = map.get(aisle);
-      if (arr) arr.push(line); else map.set(aisle, [line]);
-    }
+      if (arr) arr.push(l); else map.set(aisle, [l]);
+    };
+    for (const line of aggregate) push(aisleForFood(line.food), { kind: 'food', key: line.food.id, line });
+    if (isShoppingWeek) for (const extra of extras) push(extra.aisle, { kind: 'extra', key: `x:${extra.id}`, extra });
     for (const arr of map.values()) {
-      arr.sort((a, b) => a.food.name.localeCompare(b.food.name, 'fr'));
+      arr.sort((a, b) => sortName(a).localeCompare(sortName(b), 'fr'));
     }
     return AISLE_ORDER.filter((a) => map.has(a)).map((a) => ({ aisle: a, lines: map.get(a)! }));
-  }, [aggregate]);
+  }, [aggregate, extras, isShoppingWeek]);
 
   // Total calories pour info
   const weekTotals = useMemo(() => {
@@ -306,6 +406,98 @@ export function WeekView({ open, onClose }: Props) {
     const fullyStocked = isShoppingWeek && isFullyStocked(need, stock);
     const isChecked = isShoppingWeek && checked.has(line.food.id);
     return { need, stock, toBuy, fullyStocked, isChecked, done: isChecked || fullyStocked };
+  };
+  /** Statut commun aux deux types de lignes (pour le tri panier / à prendre / en stock). */
+  const lineState = (l: ListLine) => {
+    if (l.kind === 'extra') {
+      const isChecked = !!l.extra.checkedWeek;
+      return { isChecked, fullyStocked: false, done: isChecked };
+    }
+    const st = getStatus(l.line);
+    return { isChecked: st.isChecked, fullyStocked: st.fullyStocked, done: st.done };
+  };
+
+  /**
+   * Article ajouté à la main : même geste que les aliments (toute la ligne coche), avec
+   * un crayon pour le renommer, changer de rayon ou le retirer.
+   */
+  const renderExtraLine = (extra: ShoppingExtra) => {
+    const key = `x:${extra.id}`;
+    const isChecked = !!extra.checkedWeek;
+    const isPending = pending.has(key);
+    const editing = openExtraId === extra.id;
+    const box = isPending || isChecked ? (
+      <span className={`shrink-0 grid place-items-center w-6 h-6 rounded-full bg-brand ${isPending ? 'animate-check-pop' : ''}`}>
+        <Check size={14} strokeWidth={3} className="text-white" />
+      </span>
+    ) : (
+      <span className="shrink-0 w-6 h-6 rounded-full border-2" style={{ borderColor: '#C9D3E6' }} />
+    );
+    return (
+      <li key={key}>
+        <div className="flex items-center">
+          <button
+            onClick={() => toggleExtra(extra)}
+            className="flex items-center gap-3 flex-1 min-w-0 text-left pl-4 pr-2 py-3 tap active:bg-surface-hi transition-colors"
+          >
+            {box}
+            <span className={`min-w-0 flex-1 text-[15px] leading-tight break-words ${isChecked ? 'text-text-muted line-through decoration-text-muted/50' : 'font-medium text-text'}`}>
+              {extra.name}
+            </span>
+          </button>
+          <button
+            onClick={() => toggleExtraEditor(extra)}
+            aria-label={`Modifier ${extra.name}`}
+            aria-expanded={editing}
+            className={`shrink-0 w-10 h-12 grid place-items-center tap ${editing ? 'text-brand' : 'text-text-muted/50'}`}
+          >
+            <Pencil size={15} />
+          </button>
+        </div>
+
+        {editing && (
+          <div className="px-4 pb-3 space-y-2.5">
+            <input
+              value={extraNameDraft}
+              onChange={(e) => setExtraNameDraft(e.target.value)}
+              onBlur={() => commitExtraName(extra)}
+              onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+              aria-label="Nom de l'article"
+              enterKeyHint="done"
+              maxLength={60}
+              className="w-full h-11 px-3 rounded-xl bg-surface-hi border border-border text-[15px] text-text focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
+            />
+            <div className="space-y-1.5">
+              <div className="px-1 text-[11px] font-semibold text-text-muted">Rayon</div>
+              <div className="flex flex-wrap gap-1.5">
+                {AISLE_ORDER.map((a) => {
+                  const active = a === extra.aisle;
+                  return (
+                    <button
+                      key={a}
+                      type="button"
+                      onClick={() => setExtraAisle(extra, a)}
+                      aria-pressed={active}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[12px] font-medium tap ${active ? 'bg-brand text-white' : 'text-text'}`}
+                      style={active ? undefined : { backgroundColor: '#F4F7FD', border: '1px solid #E3EAF7' }}
+                    >
+                      <span className="leading-none">{AISLE_EMOJI[a]}</span>
+                      {AISLE_LABEL[a]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="danger" size="sm" leadingIcon={<Trash2 size={14} />} onClick={() => deleteExtra(extra)}>
+                Retirer de la liste
+              </Button>
+              <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setOpenExtraId(null)}>Fermer</Button>
+            </div>
+          </div>
+        )}
+      </li>
+    );
   };
 
   /**
@@ -424,16 +616,16 @@ export function WeekView({ open, onClose }: Props) {
   };
 
   /** Liste d'articles dans une carte blanche, lignes séparées par un filet. */
-  const listCard = (lines: AggregateLine[]) => (
+  const listCard = (lines: ListLine[]) => (
     <Card className="!p-0 overflow-hidden">
       <ul className="divide-y divide-[#EEF2F8]">
-        {lines.map((line) => renderLine(line, getStatus(line)))}
+        {lines.map((l) => (l.kind === 'food' ? renderLine(l.line, getStatus(l.line)) : renderExtraLine(l.extra)))}
       </ul>
     </Card>
   );
 
   /** Bloc rayon : petit en-tête (icône + nom + nombre) puis sa carte d'articles. */
-  const renderAisle = (aisle: Aisle, lines: AggregateLine[]) => (
+  const renderAisle = (aisle: Aisle, lines: ListLine[]) => (
     <section key={aisle} className="space-y-1.5">
       <h4 className="flex items-center gap-2 px-1 text-xs font-semibold text-text-muted">
         <span className="text-base leading-none">{AISLE_EMOJI[aisle]}</span>
@@ -445,7 +637,7 @@ export function WeekView({ open, onClose }: Props) {
   );
 
   /** Section repliable du bas (panier / déjà en stock). */
-  const renderFolded = (label: string, lines: AggregateLine[], isOpen: boolean, toggle: () => void) => (
+  const renderFolded = (label: string, lines: ListLine[], isOpen: boolean, toggle: () => void) => (
     <section className="space-y-1.5">
       <button
         type="button"
@@ -465,17 +657,17 @@ export function WeekView({ open, onClose }: Props) {
 
   // Mode courses : ce qu'il reste à prendre (par rayon), puis, repliés en bas, le panier
   // (coché) et ce qui est déjà à la maison (couvert par le garde-manger).
-  const buyGroups = groupedAggregate
-    .map((g) => ({ aisle: g.aisle, lines: g.lines.filter((l) => !getStatus(l).done) }))
+  const buyGroups = groupedLines
+    .map((g) => ({ aisle: g.aisle, lines: g.lines.filter((l) => !lineState(l).done) }))
     .filter((g) => g.lines.length > 0);
-  const flatOrdered = groupedAggregate.flatMap((g) => g.lines); // ordre rayon, nom trié
-  const inCart = flatOrdered.filter((l) => getStatus(l).isChecked);
+  const flatOrdered = groupedLines.flatMap((g) => g.lines); // ordre rayon, nom trié
+  const inCart = flatOrdered.filter((l) => lineState(l).isChecked);
   const inStock = flatOrdered.filter((l) => {
-    const s = getStatus(l);
+    const s = lineState(l);
     return s.fullyStocked && !s.isChecked;
   });
-  const total = aggregate.length;
-  const leftCount = aggregate.filter((l) => !getStatus(l).done).length;
+  const total = flatOrdered.length;
+  const leftCount = flatOrdered.filter((l) => !lineState(l).done).length;
   const doneCount = total - leftCount;
 
   return (
@@ -560,11 +752,16 @@ export function WeekView({ open, onClose }: Props) {
           </Card>
         )}
 
-        {aggregate.length === 0 ? (
+        {/* Ajout libre : tout ce qui n'est pas dans le plan, pour une seule liste de courses */}
+        {isShoppingWeek && (
+          <ShoppingAddBar state={{ extras, recents }} onAdd={addExtraItem} />
+        )}
+
+        {total === 0 ? (
           <EmptyState title="Aucun aliment planifié" description="Configure ton plan type dans Plan & Profil." />
         ) : !isShoppingWeek ? (
           <div className="space-y-4">
-            {groupedAggregate.map(({ aisle, lines }) => renderAisle(aisle, lines))}
+            {groupedLines.map(({ aisle, lines }) => renderAisle(aisle, lines))}
           </div>
         ) : (
           <div className="space-y-4">

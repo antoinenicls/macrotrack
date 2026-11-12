@@ -16,6 +16,7 @@ import { applyFoodSwaps, swapInDayPlan } from '@/lib/swap';
 import { applyMealStructure } from '@/lib/mealStructure';
 import { injectAddonFoods } from '@/lib/addons';
 import { buildTrainingDayPlan } from '@/lib/trainingDay';
+import type { ShoppingState } from '@/lib/shoppingExtras';
 
 /**
  * Construit le plan hebdo appliqué : rotation curée → substitution des aliments non
@@ -112,6 +113,12 @@ interface ProfileState {
    * `grams <= 0` retire l'entrée (plus de stock déclaré).
    */
   setPantryStock: (foodId: string, grams: number) => Promise<void>;
+  /**
+   * Met à jour les articles « en plus » de la liste de courses à partir de l'état
+   * le plus récent du store (sûr même pour des mises à jour rapprochées). Renvoyer
+   * le même état (référence) n'écrit rien.
+   */
+  updateShopping: (fn: (cur: ShoppingState) => ShoppingState) => Promise<void>;
   /**
    * Recalcule et APPLIQUE la cible calorique du jour à partir des recommandations
    * du coach (maintenance mesurée, ou correction anti-stagnation ±150), puis
@@ -273,6 +280,17 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     const next: FullSettings = { ...s, pantry };
     await settingsRepo.put(next);
     set({ settings: next });
+  },
+
+  async updateShopping(fn) {
+    const s = get().settings;
+    if (!s) return;
+    const cur: ShoppingState = { extras: s.shoppingExtras ?? [], recents: s.shoppingRecents ?? [] };
+    const next = fn(cur);
+    if (next.extras === cur.extras && next.recents === cur.recents) return;
+    const nextSettings: FullSettings = { ...s, shoppingExtras: next.extras, shoppingRecents: next.recents };
+    set({ settings: nextSettings });
+    await settingsRepo.put(nextSettings);
   },
 
   async recalcTargetsFromWeight() {

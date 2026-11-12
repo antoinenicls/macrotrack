@@ -7,26 +7,55 @@ import type { Food } from '@/types';
  */
 export type Aisle =
   | 'produce'
+  | 'boulangerie'
   | 'boucherie'
   | 'conserves'
   | 'cremerie'
   | 'epicerie-salee'
   | 'gouter'
-  | 'complements';
+  | 'boissons'
+  | 'complements'
+  // Rayons « hors alimentation » : uniquement pour les articles ajoutés à la main
+  // (capsules de café, déodorant, lessive…), pour centraliser toutes les courses ici.
+  | 'hygiene'
+  | 'entretien'
+  | 'divers';
 
 export const AISLE_LABEL: Record<Aisle, string> = {
   'produce':        'Fruits & légumes',
+  'boulangerie':    'Boulangerie',
   'boucherie':      'Boucherie',
   'conserves':      'Conserves',
   'cremerie':       'Crémerie & œufs',
   'epicerie-salee': 'Féculents & épicerie salée',
   'gouter':         'Goûter & épicerie sucrée',
-  'complements':    'Compléments'
+  'boissons':       'Café, thé & boissons',
+  'complements':    'Compléments',
+  'hygiene':        'Hygiène & beauté',
+  'entretien':      'Maison & entretien',
+  'divers':         'Divers'
 };
 
-/** Ordre de parcours type en magasin (frais d'abord, épicerie ensuite). */
+/** Icône de rayon : repère visuel immédiat en magasin. */
+export const AISLE_EMOJI: Record<Aisle, string> = {
+  'produce':        '🥦',
+  'boulangerie':    '🥖',
+  'boucherie':      '🥩',
+  'conserves':      '🥫',
+  'cremerie':       '🥛',
+  'epicerie-salee': '🍚',
+  'gouter':         '🍫',
+  'boissons':       '☕',
+  'complements':    '💪',
+  'hygiene':        '🧴',
+  'entretien':      '🧽',
+  'divers':         '🛒'
+};
+
+/** Ordre de parcours type en magasin (frais d'abord, épicerie, puis non-alimentaire). */
 export const AISLE_ORDER: Aisle[] = [
-  'produce', 'boucherie', 'conserves', 'cremerie', 'epicerie-salee', 'gouter', 'complements'
+  'produce', 'boulangerie', 'boucherie', 'conserves', 'cremerie', 'epicerie-salee', 'gouter',
+  'boissons', 'complements', 'hygiene', 'entretien', 'divers'
 ];
 
 const BY_ID: Record<string, Aisle> = {

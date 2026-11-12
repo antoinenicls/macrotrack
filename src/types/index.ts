@@ -147,6 +147,14 @@ export interface AppSettings {
    */
   pantry?: Record<string, number>;
   /**
+   * Articles ajoutés à la main à la liste de courses (hors plan : capsules de café,
+   * déodorant, lessive…) pour n'avoir qu'une seule liste. Restent jusqu'à être pris ;
+   * les articles pris disparaissent à la semaine de courses suivante.
+   */
+  shoppingExtras?: import('@/lib/shoppingExtras').ShoppingExtra[];
+  /** Articles déjà ajoutés une fois (ajout rapide en un tap, avec leur rayon). */
+  shoppingRecents?: import('@/lib/shoppingExtras').ShoppingRecent[];
+  /**
    * Si vrai, recalcule automatiquement targetKcal/macros à chaque nouvelle pesée,
    * basé sur le poids le plus récent + le déficit configuré.
    */

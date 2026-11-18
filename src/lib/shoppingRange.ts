@@ -24,16 +24,6 @@ export function toggleSkip(skips: Set<string>, day: string, weekDates: string[])
 }
 
 /**
- * Raccourci « dès demain » : retire aujourd'hui et les jours passés. Vide si aujourd'hui
- * n'est pas dans la semaine (le week-end, la liste prépare la semaine suivante) ou si
- * c'est le dernier jour.
- */
-export function skipsFromTomorrow(weekDates: string[], today: string): string[] {
-  const i = weekDates.indexOf(today);
-  return i < 0 || i === weekDates.length - 1 ? [] : weekDates.slice(0, i + 1);
-}
-
-/**
  * Courses de réassort : un jour passé (ou aujourd'hui) est retiré. Aujourd'hui, s'il est
  * gardé, compte alors en entier sur le plan type, même déjà entamé.
  */

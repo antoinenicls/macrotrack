@@ -26,7 +26,7 @@ import { ShoppingAddBar } from './ShoppingAddBar';
 import { toBuyGrams, isFullyStocked } from '@/lib/pantry';
 import { isTrainingDay, pendingTrainingItems, DEFAULT_SESSIONS_PER_WEEK } from '@/lib/trainingDay';
 import { isDiscrete } from '@/lib/portions';
-import { sanitizeSkips, toggleSkip, skipsFromTomorrow, isRestock, sessionsLeftInRange } from '@/lib/shoppingRange';
+import { sanitizeSkips, toggleSkip, isRestock, sessionsLeftInRange } from '@/lib/shoppingRange';
 
 interface Props {
   open: boolean;
@@ -177,7 +177,6 @@ export function WeekView({ open, onClose }: Props) {
     haptic('selection');
     setSkips(next);
   };
-  const tomorrowSkips = skipsFromTomorrow(dates, today);
   const isCustomDays = skips.size > 0;
   const restock = isRestock(skips, today);
 
@@ -787,19 +786,8 @@ export function WeekView({ open, onClose }: Props) {
 
         {/* Jours comptés : 7 cases sur une seule ligne, touche un jour pour le retirer */}
         <section className="space-y-1.5" aria-label="Jours comptés">
-          <div className="flex items-center justify-between gap-2 px-1 h-5">
-            <span className="text-xs font-semibold text-text-muted">
-              Jours comptés <span className="font-medium tabular-nums">· {dates.length - skips.size}/{dates.length}</span>
-            </span>
-            {isCustomDays ? (
-              <button type="button" onClick={() => { haptic('selection'); setSkips(new Set()); }} className="text-xs font-semibold text-brand tap">
-                Tous
-              </button>
-            ) : tomorrowSkips.length > 0 && (
-              <button type="button" onClick={() => { haptic('selection'); setSkips(new Set(tomorrowSkips)); }} className="text-xs font-semibold text-brand tap">
-                Dès demain
-              </button>
-            )}
+          <div className="px-1 text-xs font-semibold text-text-muted">
+            Jours comptés <span className="font-medium tabular-nums">· {dates.length - skips.size}/{dates.length}</span>
           </div>
           <div className="grid grid-cols-7 gap-1">
             {dates.map((d) => {

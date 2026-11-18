@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sanitizeSkips, toggleSkip, skipsFromTomorrow, isRestock, sessionsLeftInRange } from '../shoppingRange';
+import { sanitizeSkips, toggleSkip, isRestock, sessionsLeftInRange } from '../shoppingRange';
 
 const WEEK = ['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-20', '2026-11-21', '2026-11-22'];
 
@@ -25,16 +25,6 @@ describe('toggleSkip', () => {
   it('refuse de retirer le dernier jour compté', () => {
     const all = new Set(WEEK.slice(1));
     expect(toggleSkip(all, WEEK[0], WEEK)).toBe(all);
-  });
-});
-
-describe('skipsFromTomorrow', () => {
-  it('retire aujourd’hui et les jours passés', () => {
-    expect(skipsFromTomorrow(WEEK, '2026-11-18')).toEqual(WEEK.slice(0, 3));
-  });
-  it('rien hors de la semaine ou le dernier jour', () => {
-    expect(skipsFromTomorrow(WEEK, '2026-11-15')).toEqual([]);
-    expect(skipsFromTomorrow(WEEK, '2026-11-22')).toEqual([]);
   });
 });
 

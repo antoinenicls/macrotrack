@@ -26,9 +26,7 @@ import { ShoppingAddBar } from './ShoppingAddBar';
 import { toBuyGrams, isFullyStocked } from '@/lib/pantry';
 import { isTrainingDay, pendingTrainingItems, DEFAULT_SESSIONS_PER_WEEK } from '@/lib/trainingDay';
 import { isDiscrete } from '@/lib/portions';
-import {
-  remainingStartOptions, defaultRemainingStart, validRemainingStart, validRemainingEnd, sessionsLeftInRange
-} from '@/lib/shoppingRange';
+import { sanitizeSkips, toggleSkip, skipsFromTomorrow, isRestock, sessionsLeftInRange } from '@/lib/shoppingRange';
 
 interface Props {
   open: boolean;
@@ -45,8 +43,6 @@ interface DayPlan {
   /** Plan type du jour, même s'il est loggé : « ce qu'il reste » compte aujourd'hui en entier. */
   plannedMeals: DayPlan['meals'];
 }
-
-type RangeKind = 'all' | 'rest';
 
 /** Aggrège les besoins de la semaine par aliment, en équivalent natif (raw généralement). */
 interface AggregateLine {
@@ -157,49 +153,37 @@ export function WeekView({ open, onClose }: Props) {
   // pas pour la semaine d'après dont on ne fait pas encore les courses.
   const isShoppingWeek = week === 'this';
 
-  // « Ce qu'il reste » : réassort en milieu de semaine, la liste ne compte que les jours
-  // à partir de `restFrom`. Choix mémorisé pour la semaine (survit à une fermeture en magasin).
+  // Jours comptés : toute la semaine par défaut ; on retire ceux déjà mangés (réassort en
+  // milieu de semaine) ou hors diète (resto, déplacement). Mémorisé par semaine.
   const today = todayKey();
-  const restOptions = useMemo(
-    () => (isShoppingWeek ? remainingStartOptions(dates, today) : []),
-    [isShoppingWeek, dates, today]
-  );
-  // `restTo` : dernier jour compté (null = dimanche), pour sauter des jours hors diète.
-  const restKey = `mt-courses-from-${dates[0]}`;
-  const restEndKey = `mt-courses-to-${dates[0]}`;
-  const [restFrom, setRestFromState] = useState<string | null>(null);
-  const [restTo, setRestToState] = useState<string | null>(null);
+  const skipKey = `mt-courses-skip-${dates[0]}`;
+  const [skips, setSkipsState] = useState<Set<string>>(new Set());
   useEffect(() => {
     if (!open) return;
-    let saved: string | null = null;
-    let savedEnd: string | null = null;
-    try { saved = localStorage.getItem(restKey); savedEnd = localStorage.getItem(restEndKey); } catch { /* noop */ }
-    const from = validRemainingStart(saved, restOptions);
-    setRestFromState(from);
-    setRestToState(validRemainingEnd(savedEnd, restOptions, from));
-  }, [open, restKey, restEndKey, restOptions]);
-  const persist = (key: string, d: string | null) => {
+    let saved: unknown = null;
+    try { saved = JSON.parse(localStorage.getItem(skipKey) ?? 'null'); } catch { /* noop */ }
+    setSkipsState(sanitizeSkips(saved, dates));
+  }, [open, skipKey, dates]);
+  const setSkips = (next: Set<string>) => {
+    setSkipsState(next);
     try {
-      if (d) localStorage.setItem(key, d); else localStorage.removeItem(key);
+      if (next.size) localStorage.setItem(skipKey, JSON.stringify([...next]));
+      else localStorage.removeItem(skipKey);
     } catch { /* noop */ }
   };
-  const setRestTo = (d: string | null) => { setRestToState(d); persist(restEndKey, d); };
-  const setRestFrom = (d: string | null) => {
-    setRestFromState(d);
-    persist(restKey, d);
-    // Fin avant le nouveau départ : on revient à « jusqu'à dimanche ».
-    if (restTo && (!d || restTo < d)) setRestTo(null);
+  const tapDay = (d: string) => {
+    const next = toggleSkip(skips, d, dates);
+    if (next === skips) { haptic('warning'); return; }
+    haptic('selection');
+    setSkips(next);
   };
-  const fromDate = restOptions.length > 0 ? restFrom : null;
-  const isRest = fromDate !== null;
-  const toDate = isRest ? restTo : null;
-  const lastDay = dates[dates.length - 1];
-  const endLabel = format(new Date(`${toDate ?? lastDay}T12:00:00`), 'EEEE', { locale: fr });
-  const dayChip = (d: string) => (d === today ? 'auj.' : format(new Date(`${d}T12:00:00`), 'EEE', { locale: fr }));
+  const tomorrowSkips = skipsFromTomorrow(dates, today);
+  const isCustomDays = skips.size > 0;
+  const restock = isRestock(skips, today);
 
   // Clé par vraie semaine → reset auto ; coches à part pour un réassort (sinon ce qu'on a
   // pris lundi resterait « dans le panier » alors qu'il faut en racheter).
-  const storageKey = `mt-courses-checked-${dates[0]}${fromDate ? `-from-${fromDate}` : ''}`;
+  const storageKey = `mt-courses-checked-${dates[0]}${restock ? `-r-${today}` : ''}`;
   /** Semaine de courses en cours (son lundi) : marque les articles « en plus » pris. */
   const shoppingWeekKey = dayKey(anchorMonday);
 
@@ -416,18 +400,16 @@ export function WeekView({ open, onClose }: Props) {
   // Jours comptés dans la liste : toute la semaine, ou seulement ceux qui restent (aujourd'hui
   // compté en entier sur le plan type, même déjà entamé).
   const rangeDays = useMemo(
-    () => (fromDate
-      ? days
-          .filter((d) => d.date >= fromDate && (!toDate || d.date <= toDate))
-          .map((d) => (d.date === today ? { ...d, meals: d.plannedMeals } : d))
-      : days),
-    [days, fromDate, toDate, today]
+    () => days
+      .filter((d) => !skips.has(d.date))
+      .map((d) => (restock && d.date === today ? { ...d, meals: d.plannedMeals } : d)),
+    [days, skips, restock, today]
   );
   const sessionsLeft = useMemo(() => {
     const inRange = rangeDays.filter((d) => isTrainingDay(d.meals)).length;
-    const before = fromDate ? days.filter((d) => d.date < fromDate && isTrainingDay(d.meals)).length : 0;
-    return sessionsLeftInRange(sessionsPerWeek, before, inRange, rangeDays.length);
-  }, [days, rangeDays, fromDate, sessionsPerWeek]);
+    const outside = days.filter((d) => skips.has(d.date) && isTrainingDay(d.meals)).length;
+    return sessionsLeftInRange(sessionsPerWeek, outside, inRange, rangeDays.length);
+  }, [days, rangeDays, skips, sessionsPerWeek]);
   const setSessionsPerWeek = (n: number) => {
     if (!settings) return;
     haptic('selection');
@@ -703,7 +685,7 @@ export function WeekView({ open, onClose }: Props) {
               suffix="g"
               min={0}
               placeholder="0"
-              hint={`Ce que tu as déjà à la maison · besoin ${isRest ? `jusqu'à ${endLabel}` : 'de la semaine'} : ${fmtBuy(need)}`}
+              hint={`Ce que tu as déjà à la maison · besoin ${isCustomDays ? 'des jours comptés' : 'de la semaine'} : ${fmtBuy(need)}`}
             />
             <div className="flex flex-wrap items-center gap-2">
               {serving && (
@@ -803,52 +785,45 @@ export function WeekView({ open, onClose }: Props) {
           </div>
         </div>
 
-        {/* Réassort en milieu de semaine : seulement ce qu'il reste à manger */}
-        {restOptions.length > 0 && (
-          <div className="space-y-2">
-            <SegmentedControl<RangeKind>
-              value={isRest ? 'rest' : 'all'}
-              onChange={(v) => setRestFrom(v === 'rest' ? (restFrom ?? defaultRemainingStart(restOptions, today)) : null)}
-              options={[
-                { value: 'all', label: 'Toute la semaine' },
-                { value: 'rest', label: "Ce qu'il reste" }
-              ]}
-            />
-            {isRest && fromDate && (
-              <div className="space-y-1.5 px-1">
-                {[
-                  { label: 'Dès', opts: restOptions, value: fromDate, pick: (d: string) => setRestFrom(d) },
-                  {
-                    label: "Jusqu'à",
-                    opts: restOptions.filter((d) => d >= fromDate),
-                    value: toDate ?? lastDay,
-                    pick: (d: string) => setRestTo(d === lastDay ? null : d)
-                  }
-                ].map((row) => (
-                  <div key={row.label} className="flex flex-wrap items-center gap-1.5">
-                    <span className="w-14 shrink-0 text-xs font-semibold text-text-muted">{row.label}</span>
-                    {row.opts.map((d) => {
-                      const active = d === row.value;
-                      return (
-                        <button
-                          key={d}
-                          type="button"
-                          onClick={() => { if (!active) { haptic('selection'); row.pick(d); } }}
-                          aria-pressed={active}
-                          className={`h-8 px-3 rounded-full text-sm font-medium tap transition-colors ${
-                            active ? 'bg-brand text-white' : 'bg-surface-hi text-text-muted'
-                          }`}
-                        >
-                          {dayChip(d)}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
+        {/* Jours comptés : 7 cases sur une seule ligne, touche un jour pour le retirer */}
+        <section className="space-y-1.5" aria-label="Jours comptés">
+          <div className="flex items-center justify-between gap-2 px-1 h-5">
+            <span className="text-xs font-semibold text-text-muted">
+              Jours comptés <span className="font-medium tabular-nums">· {dates.length - skips.size}/{dates.length}</span>
+            </span>
+            {isCustomDays ? (
+              <button type="button" onClick={() => { haptic('selection'); setSkips(new Set()); }} className="text-xs font-semibold text-brand tap">
+                Tous
+              </button>
+            ) : tomorrowSkips.length > 0 && (
+              <button type="button" onClick={() => { haptic('selection'); setSkips(new Set(tomorrowSkips)); }} className="text-xs font-semibold text-brand tap">
+                Dès demain
+              </button>
             )}
           </div>
-        )}
+          <div className="grid grid-cols-7 gap-1">
+            {dates.map((d) => {
+              const on = !skips.has(d);
+              const date = new Date(`${d}T12:00:00`);
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => tapDay(d)}
+                  aria-pressed={on}
+                  aria-label={`${formatHumanDate(d)}${on ? '' : ' (retiré)'}`}
+                  className={`relative h-12 rounded-xl flex flex-col items-center justify-center gap-0.5 tap transition-colors ${
+                    on ? 'bg-brand/10 text-brand' : 'bg-surface-hi text-text-muted/50'
+                  }`}
+                >
+                  <span className="text-[10px] font-semibold uppercase leading-none">{format(date, 'EEEEE', { locale: fr })}</span>
+                  <span className={`text-sm font-bold tabular-nums leading-none ${on ? '' : 'line-through'}`}>{format(date, 'd')}</span>
+                  {d === today && <span className="absolute bottom-1 w-1 h-1 rounded-full bg-current" />}
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
         {/* Résumé : ce qu'il reste à prendre + progression */}
         {total > 0 && (
@@ -962,7 +937,7 @@ export function WeekView({ open, onClose }: Props) {
             const isPast = day.date < today;
             const isOpen = expanded === day.date;
             return (
-              <Card key={day.date} className={isToday ? 'border-brand/40' : ''}>
+              <Card key={day.date} className={`${isToday ? 'border-brand/40' : ''} ${skips.has(day.date) ? 'opacity-50' : ''}`}>
                 <button
                   onClick={() => setExpanded(isOpen ? null : day.date)}
                   className="w-full flex items-center justify-between text-left tap"

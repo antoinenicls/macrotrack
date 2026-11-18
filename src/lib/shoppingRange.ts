@@ -1,52 +1,58 @@
 /* =========================================================================
- *  Liste de courses « ce qu'il reste » : courses de réassort en milieu de semaine.
+ *  Liste de courses : jours comptés.
  *
- *  Au lieu du total lundi → dimanche, la liste ne compte que les jours à partir d'une
- *  date choisie (par défaut demain) : ce qu'on va encore manger d'ici dimanche. Le stock
- *  « déjà à la maison » s'en déduit, ce qui donne la vraie quantité à racheter.
+ *  Par défaut, la liste compte toute la semaine. On peut retirer des jours : ceux déjà
+ *  passés (courses de réassort en milieu de semaine : seulement ce qu'il reste à manger)
+ *  ou ceux hors diète (resto, déplacement). Le stock « déjà à la maison » se déduit du
+ *  besoin des jours restants, ce qui donne la vraie quantité à racheter.
  *  Dates au format `YYYY-MM-DD` (comparables en chaîne). Pur, sans I/O.
  * ========================================================================= */
 
+/** Jours retirés mémorisés, limités à la semaine affichée ; jamais tous (liste vide). */
+export function sanitizeSkips(saved: unknown, weekDates: string[]): Set<string> {
+  if (!Array.isArray(saved)) return new Set();
+  const skips = new Set(saved.filter((d): d is string => typeof d === 'string' && weekDates.includes(d)));
+  return skips.size >= weekDates.length ? new Set() : skips;
+}
+
+/** Retire / remet un jour. Refusé (même Set) s'il ne resterait plus aucun jour. */
+export function toggleSkip(skips: Set<string>, day: string, weekDates: string[]): Set<string> {
+  const next = new Set(skips);
+  if (next.has(day)) next.delete(day);
+  else next.add(day);
+  return next.size >= weekDates.length ? skips : next;
+}
+
 /**
- * Jours de départ possibles : aujourd'hui puis les jours suivants de la semaine affichée.
- * Vide si aujourd'hui n'est pas dans cette semaine (le week-end, la liste prépare déjà la
- * semaine suivante en entier) ou si c'est le dernier jour (plus rien à découper).
+ * Raccourci « dès demain » : retire aujourd'hui et les jours passés. Vide si aujourd'hui
+ * n'est pas dans la semaine (le week-end, la liste prépare la semaine suivante) ou si
+ * c'est le dernier jour.
  */
-export function remainingStartOptions(weekDates: string[], today: string): string[] {
-  if (!weekDates.includes(today)) return [];
-  const opts = weekDates.filter((d) => d >= today);
-  return opts.length > 1 ? opts : [];
-}
-
-/** Départ par défaut : demain (on fait ses courses pour la suite), sinon aujourd'hui. */
-export function defaultRemainingStart(options: string[], today: string): string | null {
-  return options.find((d) => d > today) ?? options[0] ?? null;
-}
-
-/** Départ mémorisé encore valable (un jour passé n'a plus de sens), sinon null. */
-export function validRemainingStart(saved: string | null, options: string[]): string | null {
-  return saved && options.includes(saved) ? saved : null;
+export function skipsFromTomorrow(weekDates: string[], today: string): string[] {
+  const i = weekDates.indexOf(today);
+  return i < 0 || i === weekDates.length - 1 ? [] : weekDates.slice(0, i + 1);
 }
 
 /**
- * Dernier jour mémorisé encore valable (dans la semaine et pas avant le départ), sinon null
- * (= jusqu'à la fin de la semaine). Sert à sauter des jours hors diète (déplacement, resto).
+ * Courses de réassort : un jour passé (ou aujourd'hui) est retiré. Aujourd'hui, s'il est
+ * gardé, compte alors en entier sur le plan type, même déjà entamé.
  */
-export function validRemainingEnd(saved: string | null, options: string[], from: string | null): string | null {
-  return saved && from && options.includes(saved) && saved >= from ? saved : null;
+export function isRestock(skips: Set<string>, today: string): boolean {
+  for (const d of skips) if (d <= today) return true;
+  return false;
 }
 
 /**
- * Séances encore à prévoir sur la période : l'objectif de la semaine moins celles déjà
- * comptées (avant la période, ou déclarées dans un jour de la période), au plus une par
- * jour restant.
+ * Séances encore à prévoir sur les jours comptés : l'objectif de la semaine moins celles
+ * déjà comptées (dans un jour retiré, ou déclarées dans un jour compté), au plus une par
+ * jour compté.
  */
 export function sessionsLeftInRange(
   perWeek: number,
-  countedBefore: number,
+  countedOutside: number,
   countedInRange: number,
   daysInRange: number
 ): number {
-  const left = Math.max(0, Math.round(perWeek) - countedBefore - countedInRange);
+  const left = Math.max(0, Math.round(perWeek) - countedOutside - countedInRange);
   return Math.min(left, Math.max(0, daysInRange - countedInRange));
 }

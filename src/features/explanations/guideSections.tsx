@@ -368,7 +368,7 @@ Tendance (kg/sem) = pente de la droite ajustée
           <Where>Repas → « Vue semaine & liste de courses »</Where>
           <Bullets items={[
             <>Choisis <B>Cette semaine</B> ou <B>Semaine prochaine</B>.</>,
-            <>Courses en milieu de semaine : <B>Ce qu'il reste</B> ne compte que les jours choisis : dès demain par défaut, et jusqu'au jour de ton choix (resto, déplacement le week-end…). Indique ce que tu as encore à la maison pour avoir la quantité exacte à racheter.</>,
+            <><B>Jours comptés</B> : touche un jour pour le retirer (resto, déplacement…). En milieu de semaine, « Dès demain » ne garde que ce qu'il reste à manger ; indique ce que tu as encore à la maison pour avoir la quantité exacte à racheter.</>,
             <>La liste est rangée <B>par rayon</B>, avec des quantités d'achat concrètes (« 9 bananes », « 2 boîtes », « 1,1 kg »).</>,
             <>Touche une ligne pour la mettre <B>dans le panier</B>.</>,
             <>L'icône colis la marque <B>déjà à la maison</B> : elle est déduite et ne revient pas.</>,

@@ -39,7 +39,7 @@ export function TrainingDayCard() {
   };
 
   return (
-    <Card className="!p-4" style={active ? { backgroundColor: '#EEF5FF', border: '1px solid rgba(0, 96, 223, 0.25)' } : undefined}>
+    <Card className="!p-4" style={active ? { backgroundColor: '#F0F7FF', border: '1px solid rgba(0, 96, 223, 0.25)' } : undefined}>
       <div className="flex items-center gap-3">
         <span className="shrink-0 rounded-2xl p-2.5" style={{ backgroundColor: 'rgba(0, 96, 223, 0.10)', color: '#0060DF' }}>
           {active ? <Check size={20} strokeWidth={2.5} /> : <Dumbbell size={20} />}

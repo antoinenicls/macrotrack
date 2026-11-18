@@ -88,7 +88,7 @@ export function EstimateCarrySettings() {
           </div>
 
           {dayKcal > 0 && (
-            <div className="rounded-2xl bg-surface-hi border border-border px-3 py-2.5 text-xs leading-snug">
+            <div className="rounded-2xl bg-alt px-3 py-2.5 text-xs leading-snug">
               Exemple : un écart de +{EXAMPLE_KCAL} kcal donne{' '}
               {perDay > 0
                 ? <span className="font-semibold">−{fmtKcal(perDay)} sur {cfg.days > 1 ? `chacun des ${cfg.days} jours suivants` : 'le lendemain'}</span>

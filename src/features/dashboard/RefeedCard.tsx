@@ -70,7 +70,7 @@ export function RefeedCard() {
   };
 
   return (
-    <Card className="!p-4 space-y-3" style={applied ? { backgroundColor: '#EEF5FF', border: '1px solid rgba(0, 96, 223, 0.25)' } : undefined}>
+    <Card className="!p-4 space-y-3" style={applied ? { backgroundColor: '#F0F7FF', border: '1px solid rgba(0, 96, 223, 0.25)' } : undefined}>
       <div className="flex items-center gap-3">
         <span className="shrink-0 rounded-2xl p-2.5" style={{ backgroundColor: 'rgba(0, 96, 223, 0.10)', color: '#0060DF' }}>
           {applied ? <Check size={20} strokeWidth={2.5} /> : <CalendarHeart size={20} />}
@@ -106,7 +106,7 @@ export function RefeedCard() {
       </div>
 
       {/* Les 4 chiffres du jour de recharge, sur une bande discrète */}
-      <div className="grid grid-cols-4 rounded-xl py-2 text-center" style={{ backgroundColor: applied ? '#FFFFFF' : '#F4F7FD' }}>
+      <div className="grid grid-cols-4 rounded-xl py-2 text-center" style={{ backgroundColor: applied ? '#FFFFFF' : '#F5F5F7' }}>
         <Stat value={String(Math.round(g.macros.kcal))} label="kcal" />
         <Stat value={`${g.macros.protein} g`} label="protéines" />
         <Stat value={`${g.macros.carbs} g`} label="glucides ↑" strong />
@@ -132,7 +132,7 @@ export function RefeedCard() {
 function Stat({ value, label, strong }: { value: string; label: string; strong?: boolean }) {
   return (
     <div className="min-w-0">
-      <div className="text-sm font-semibold tabular-nums leading-tight" style={{ color: strong ? '#0060DF' : '#111827' }}>{value}</div>
+      <div className="text-sm font-semibold tabular-nums leading-tight" style={{ color: strong ? '#0060DF' : '#1D1D1F' }}>{value}</div>
       <div className="text-[10px] text-text-muted leading-tight mt-0.5">{label}</div>
     </div>
   );

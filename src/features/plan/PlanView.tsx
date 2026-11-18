@@ -67,7 +67,7 @@ export function PlanView() {
       </div>
 
       {/* Header du jour : nom + macros totales */}
-      <div className="rounded-xl bg-surface-hi border border-border p-3">
+      <div className="rounded-xl bg-alt p-3">
         <div className="font-semibold capitalize">{WEEKDAY_LABEL_LONG[selected]}</div>
         <div className="text-xs text-text-muted mt-1">
           {fmtKcal(dayTotals.kcal)} · P {fmtG(dayTotals.protein)} · G {fmtG(dayTotals.carbs)} · L {fmtG(dayTotals.fat)}

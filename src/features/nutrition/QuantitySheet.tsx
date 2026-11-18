@@ -170,7 +170,7 @@ export function QuantitySheet({ open, food, initialGrams = 100, initialCooked, o
           </div>
         )}
 
-        <div className="rounded-xl bg-surface-hi border border-border p-3">
+        <div className="rounded-xl bg-alt p-3">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs uppercase tracking-wide text-text-muted">Aperçu macros</span>
             {inverseEquiv && (

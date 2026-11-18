@@ -24,8 +24,8 @@ export default defineConfig({
         short_name: 'MacroTrack',
         description: 'Suivi de diète et recomposition corporelle',
         // Couleurs CLAIRES pour le splash screen iOS / standalone bg
-        theme_color: '#EEF3FE',
-        background_color: '#EEF3FE',
+        theme_color: '#FFFFFF',
+        background_color: '#FFFFFF',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
@@ -51,6 +51,17 @@ export default defineConfig({
             options: {
               cacheName: 'images',
               expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 }
+            }
+          },
+          {
+            // Polices Google (Plus Jakarta Sans + Inter) : gardées un an, l'app reste
+            // identique hors ligne.
+            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\//,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'macrotrack-fonts',
+              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] }
             }
           }
         ]

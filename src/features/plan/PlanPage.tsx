@@ -46,7 +46,7 @@ export function PlanPage() {
   };
 
   return (
-    <div className="space-y-4 px-5 pb-5">
+    <div className="space-y-4 px-4 pb-6">
       <PageHeader title="Plan & Profil" subtitle="Configuration" />
 
       <div className="space-y-2">

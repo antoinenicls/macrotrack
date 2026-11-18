@@ -97,20 +97,17 @@ export function MealCard({
   };
 
   return (
-    <div className="rounded-3xl overflow-hidden shadow-card" style={{ backgroundColor: '#FFFFFF' }}>
-      {/* HEADER en couleur pleine — texte NOIR hardcoded pour lisibilité */}
-      <div
-        className="px-5 py-4 flex items-center gap-3"
-        style={{ backgroundColor: bg }}
-      >
-        <div className="rounded-2xl p-2 shrink-0" style={{ backgroundColor: 'rgba(255,255,255,0.55)' }}>
-          <Icon size={22} strokeWidth={2.5} style={{ color: '#111827' }} />
+    <div className="card overflow-hidden">
+      {/* En-tête façon GymTrack : pastille teintée de la couleur du repas, titre Plus Jakarta */}
+      <div className="flex items-center gap-3 px-4 pb-2 pt-4">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl" style={{ backgroundColor: `${bg}38` }}>
+          <Icon size={21} strokeWidth={2.4} style={{ color: '#1D1D1F' }} />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-extrabold leading-tight tracking-tight" style={{ color: '#111827' }}>
+          <h3 className="font-display text-[19px] font-extrabold leading-tight tracking-[-0.03em]" style={{ color: '#1D1D1F' }}>
             {MEAL_LABEL[slot]}
           </h3>
-          <div className="text-xs font-medium mt-0.5" style={{ color: 'rgba(17,24,39,0.75)' }}>
+          <div className="num mt-0.5 text-[12px] font-semibold text-text-muted">
             {fmtKcal(totals.kcal)} · P {fmtG(totals.protein)} · G {fmtG(totals.carbs)} · L {fmtG(totals.fat)}
           </div>
         </div>
@@ -122,20 +119,19 @@ export function MealCard({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-              className="shrink-0 rounded-full inline-flex items-center gap-1 px-2.5 h-7"
-              style={{ backgroundColor: 'rgba(17,24,39,0.88)' }}
+              className="shrink-0 inline-flex h-7 items-center gap-1 rounded-pill bg-success px-2.5"
             >
               <Check size={14} strokeWidth={3.5} style={{ color: '#FFFFFF' }} />
-              <span className="text-xs font-extrabold" style={{ color: '#FFFFFF' }}>Mangé</span>
+              <span className="font-display text-xs font-extrabold" style={{ color: '#FFFFFF' }}>Mangé</span>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
       {/* BODY blanc avec contenu */}
-      <div className="px-5 py-4 space-y-3" style={{ backgroundColor: '#FFFFFF', color: '#111827' }}>
+      <div className="px-2.5 pb-3 pt-1 space-y-2" style={{ backgroundColor: '#FFFFFF', color: '#1D1D1F' }}>
         {templateItems.length > 0 && (
-          <ul className="space-y-1.5">
+          <ul className="space-y-1">
             {templateItems.map((t) => {
               const food = byId(t.foodId);
               const { consumed, full, over, partial, remaining, excess } = portionOf(t.foodId, t.grams);
@@ -171,7 +167,7 @@ export function MealCard({
                             : <Circle size={24} className="text-text-muted/40" />}
                   </motion.span>
                   <div className="flex-1 min-w-0">
-                    <div className={`text-[15px] leading-snug break-words transition-all ${replaced ? 'font-medium text-text-muted/60 line-through' : full || partial ? 'font-bold text-text' : 'font-semibold text-text-muted'}`}>
+                    <div className={`text-[15px] leading-snug break-words transition-all ${replaced ? 'font-medium text-text-muted/60 line-through' : full || partial ? 'font-semibold text-text' : 'font-medium text-text'}`}>
                       {food?.name ?? '–'}
                     </div>
                     {replaced ? null : partial ? (
@@ -218,7 +214,7 @@ export function MealCard({
               );
 
               const rowStyle = replaced
-                ? { backgroundColor: 'transparent', borderColor: 'rgba(17,24,39,0.10)', borderStyle: 'dashed' as const }
+                ? { backgroundColor: 'transparent', borderColor: 'rgba(29,29,31,0.10)', borderStyle: 'dashed' as const }
                 : over
                   ? { backgroundColor: 'rgba(217,119,6,0.10)', borderColor: 'rgba(217,119,6,0.45)' }  // ambre "dépassé"
                   : full
@@ -231,22 +227,21 @@ export function MealCard({
                 <li key={t.foodId}>
                   <div className="flex items-center gap-1.5">
                     {editable ? (
-                      <motion.button
+                      <button
                         onClick={() => {
                           haptic('selection');
                           // Tap = "tout mangé" / "annuler". La portion fine passe par le bouton ½.
                           onSetPortion(t.foodId, full ? 0 : t.grams, t.cooked);
                           if (editorOpen) setOpenPortionId(null);
                         }}
-                        whileTap={{ scale: 0.97 }}
-                        className="flex-1 min-w-0 flex items-center gap-3 py-2.5 rounded-2xl px-3 tap text-left border transition-colors duration-200"
+                        className="flex-1 min-w-0 flex items-center gap-2.5 py-2.5 rounded-xl px-2 tap text-left border transition-colors duration-200"
                         style={rowStyle}
                       >
                         {rowInner}
-                      </motion.button>
+                      </button>
                     ) : (
                       <div
-                        className="flex-1 min-w-0 flex items-center gap-3 py-2.5 rounded-2xl px-3 text-left border transition-colors duration-200"
+                        className="flex-1 min-w-0 flex items-center gap-3 py-2.5 rounded-xl px-2.5 text-left border transition-colors duration-200"
                         style={rowStyle}
                       >
                         {rowInner}
@@ -256,7 +251,7 @@ export function MealCard({
                       <button
                         onClick={() => { haptic('light'); onSwap(t.foodId, t.grams, t.cooked); }}
                         aria-label={`Remplacer ${food?.name ?? ''}`}
-                        className="shrink-0 w-9 h-9 grid place-items-center rounded-xl border tap transition-colors text-text-muted active:bg-surface-hi"
+                        className="pressable shrink-0 w-9 h-9 grid place-items-center rounded-xl bg-alt text-text-muted active:bg-black/10"
                       >
                         <Repeat size={15} />
                       </button>
@@ -266,21 +261,21 @@ export function MealCard({
                         onClick={() => openPortion(t.foodId, consumed)}
                         aria-label={`Portion déjà mangée de ${food?.name ?? ''}`}
                         aria-expanded={editorOpen}
-                        className="shrink-0 w-9 h-9 grid place-items-center rounded-xl border tap transition-colors text-text-muted active:bg-surface-hi"
+                        className="pressable shrink-0 w-9 h-9 grid place-items-center rounded-xl border border-transparent bg-alt text-text-muted active:bg-black/10"
                         style={over
                           ? { color: OVER, borderColor: 'rgba(217,119,6,0.5)', backgroundColor: 'rgba(217,119,6,0.10)' }
                           : editorOpen || partial
                             ? { color: PARTIAL, borderColor: 'rgba(219,39,119,0.5)', backgroundColor: 'rgba(219,39,119,0.10)' }
                             : undefined}
                       >
-                        <span className="text-sm font-bold leading-none">½</span>
+                        <span className="font-display text-[15px] font-extrabold leading-none">½</span>
                       </button>
                     )}
                   </div>
 
                   {/* Éditeur de portion fractionnée inline */}
                   {editable && editorOpen && (
-                    <div className="mt-1.5 rounded-2xl border border-border bg-surface-hi p-3 space-y-2">
+                    <div className="mt-1.5 rounded-xl bg-alt p-3 space-y-2">
                       <div className="text-xs text-text-muted">
                         Portion prévue : <span className="font-semibold text-text">{t.grams} g</span>
                         {equiv && <> · ≈ {equiv}</>}
@@ -321,7 +316,7 @@ export function MealCard({
         {extraItems.length > 0 && (
           <>
             {templateItems.length > 0 && (
-              <div className="text-[10px] uppercase tracking-[0.12em] font-bold text-text-muted pt-1">Hors plan</div>
+              <div className="section-label px-2.5 pt-2">Hors plan</div>
             )}
             <ul className="space-y-2">
               {extraItems.map(({ it, idx }) => {
@@ -435,7 +430,7 @@ export function MealCard({
         {editable && !hasEstimate && (
           <button
             onClick={() => { haptic('light'); onEatOut(); }}
-            className="w-full mt-1 flex items-center justify-center gap-2 rounded-2xl border border-dashed border-border py-2.5 text-xs font-semibold text-text-muted active:bg-surface-hi tap"
+            className="w-full mt-1 flex items-center justify-center gap-2 rounded-xl bg-alt py-3 text-[13px] font-semibold text-text-muted tap"
           >
             <UtensilsCrossed size={14} /> Estimer ce repas (non pesé)
           </button>

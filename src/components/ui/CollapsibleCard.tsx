@@ -28,20 +28,20 @@ export function CollapsibleCard({ title, icon, summary, defaultOpen = false, hea
     <Card className="!p-0 overflow-hidden">
       <button
         onClick={() => { haptic('light'); setOpen((o) => !o); }}
-        className="w-full flex items-center gap-3 px-5 py-4 text-left tap"
+        className="w-full flex items-center gap-3 px-4 py-3.5 text-left tap"
         aria-expanded={open}
       >
-        {icon && <span className="shrink-0 rounded-xl bg-brand/10 text-brand p-2">{icon}</span>}
+        {icon && <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">{icon}</span>}
         <span className="flex-1 min-w-0">
           <span className="block font-semibold text-[15px] leading-snug">{title}</span>
-          {summary && <span className="block text-xs text-text-muted mt-0.5 leading-snug break-words">{summary}</span>}
+          {summary && <span className="block text-[13px] text-text-muted mt-0.5 leading-snug break-words">{summary}</span>}
         </span>
         {headerRight}
         <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }} className="shrink-0">
           <ChevronDown size={20} className="text-text-muted" />
         </motion.span>
       </button>
-      {open && <div className="px-5 pb-5 space-y-4">{children}</div>}
+      {open && <div className="px-4 pb-4 space-y-4">{children}</div>}
     </Card>
   );
 }

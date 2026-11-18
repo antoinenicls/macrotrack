@@ -7,39 +7,22 @@ interface Props {
 }
 
 /**
- * Header de page. Couleurs HARDCODED pour éviter tout overload dark mode iOS.
- * L'éventuelle action de la page (`right`) est ancrée en haut à droite.
+ * Titre de page, dans la typographie de GymTrack : gros titre Plus Jakarta très gras,
+ * resserré, et la précision (date, contexte) en dessous, en gris. L'éventuelle action de
+ * la page (`right`) est ancrée en haut à droite.
  */
 export function PageHeader({ title, subtitle, right }: Props) {
   return (
-    <header className="pt-safe">
-      <div className="flex items-end justify-between gap-3 px-5 pt-5 pb-3">
-        {/* min-w-0 : sans lui, un titre long pousse le groupe de droite hors
-            de l'ecran au lieu de se laisser tronquer. */}
-        <div className="min-w-0">
-          {subtitle && (
-            <p
-              className="text-[11px] font-bold uppercase tracking-[0.12em] mb-1"
-              style={{ color: '#0060DF' }}
-            >
-              {subtitle}
-            </p>
-          )}
-          <h1
-            className="text-[30px] font-extrabold leading-[1.05] tracking-tight"
-            style={{ color: '#111827' }}
-          >
-            {title}
-          </h1>
-        </div>
-        {/* whitespace-nowrap : l'action de page ne doit jamais couper son
-            libelle en deux ("Ajou-ter") quand la place se resserre. */}
-        {right && (
-          <div className="flex items-center gap-2 shrink-0 whitespace-nowrap">
-            {right}
-          </div>
-        )}
+    <header className="flex items-start justify-between gap-3 pb-2 pt-3">
+      {/* min-w-0 : sans lui, un titre long pousse le groupe de droite hors de l'écran. */}
+      <div className="min-w-0">
+        <h1 className="font-display text-[32px] font-black leading-[1.04] tracking-[-1.5px] text-text">
+          {title}
+        </h1>
+        {subtitle && <p className="mt-1 text-[15px] text-text-muted first-letter:uppercase">{subtitle}</p>}
       </div>
+      {/* whitespace-nowrap : l'action de page ne coupe jamais son libellé en deux. */}
+      {right && <div className="flex shrink-0 items-center gap-2 whitespace-nowrap pt-1">{right}</div>}
     </header>
   );
 }

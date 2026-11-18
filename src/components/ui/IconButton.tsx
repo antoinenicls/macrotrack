@@ -15,7 +15,7 @@ export const IconButton = forwardRef<HTMLButtonElement, Props>(function IconButt
       ref={ref}
       aria-label={label}
       className={[
-        'inline-flex items-center justify-center rounded-full tap text-text active:bg-surface-hi transition-colors',
+        'inline-flex items-center justify-center rounded-xl tap text-text-muted active:bg-alt',
         className
       ].join(' ')}
       onClick={(e) => { haptic('light'); onClick?.(e); }}

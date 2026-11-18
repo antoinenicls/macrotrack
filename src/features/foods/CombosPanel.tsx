@@ -20,7 +20,7 @@ export function CombosPanel() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between px-1">
-        <h2 className="text-sm uppercase tracking-wide text-text-muted">Repas favoris / combos</h2>
+        <h2 className="section-label">Repas favoris / combos</h2>
         <Button size="sm" variant="secondary" leadingIcon={<Plus size={16} />} onClick={() => setEditor('new')}>Nouveau</Button>
       </div>
 

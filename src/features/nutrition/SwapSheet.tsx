@@ -110,7 +110,7 @@ export function SwapSheet({ open, onClose, target, dateKey }: Props) {
           <button
             onClick={revert}
             disabled={busy}
-            className="w-full flex items-center gap-2.5 rounded-2xl border border-border bg-surface-hi px-3 py-2.5 tap active:bg-surface text-left"
+            className="w-full flex items-center gap-2.5 rounded-2xl bg-alt px-3 py-2.5 tap active:bg-surface text-left"
           >
             <RotateCcw size={16} className="text-text-muted shrink-0" />
             <span className="flex-1 min-w-0 text-sm">

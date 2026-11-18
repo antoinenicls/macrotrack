@@ -163,7 +163,7 @@ export function TemplateDayForm() {
         const m = getMeal(slot);
         const totals = sumMacros(m.items.map((it) => macrosForItem(byId(it.foodId), { foodId: it.foodId, grams: it.grams, cooked: it.cooked })));
         return (
-          <div key={slot} className="rounded-xl bg-surface-hi border border-border p-3">
+          <div key={slot} className="rounded-xl bg-alt p-3">
             <div className="flex items-center justify-between mb-2">
               <div>
                 <div className="font-medium">{MEAL_LABEL[slot]}</div>

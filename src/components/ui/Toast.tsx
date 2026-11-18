@@ -16,14 +16,14 @@ export function ToastHost() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -16, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="pointer-events-auto max-w-sm w-full rounded-2xl bg-surface-hi border border-border px-4 py-3 shadow-card flex items-center gap-3"
+            className="pointer-events-auto max-w-sm w-full rounded-card bg-white/95 backdrop-blur border border-border px-4 py-3 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.25)] flex items-center gap-3"
           >
             {/* Succès en BLEU (marque) et non en vert : un toast est une confirmation
                 d'action, pas un état à interpréter — l'icône ✓ porte déjà le sens. */}
             {t.kind === 'success' && <CheckCircle2 size={18} className="text-brand shrink-0" />}
             {t.kind === 'error' && <XCircle size={18} className="text-danger shrink-0" />}
             {t.kind === 'info' && <Info size={18} className="text-brand shrink-0" />}
-            <span className="text-sm text-text flex-1">{t.message}</span>
+            <span className="text-[14px] font-medium text-text flex-1">{t.message}</span>
             {t.action && (
               <button
                 onClick={() => {

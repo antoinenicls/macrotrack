@@ -76,7 +76,7 @@ export function ShoppingAddBar({ state, onAdd, onForget }: Props) {
               autoCorrect="on"
               autoCapitalize="sentences"
               maxLength={60}
-              className="w-full h-12 px-3 rounded-xl bg-surface-hi border border-border text-text placeholder:text-text-muted/60 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
+              className="w-full h-12 px-3 rounded-xl bg-alt text-text placeholder:text-text-muted/60 focus:outline-none focus:bg-brand-soft"
             />
 
             {aisle && (
@@ -95,7 +95,7 @@ export function ShoppingAddBar({ state, onAdd, onForget }: Props) {
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => pick(r)}
                     className="inline-flex items-center gap-1 max-w-full px-2.5 py-1.5 rounded-full text-[13px] font-medium text-text tap"
-                    style={{ backgroundColor: '#F4F7FD', border: '1px solid #E3EAF7' }}
+                    style={{ backgroundColor: '#F5F5F7', border: '1px solid #ECECEE' }}
                   >
                     <span className="leading-none">{AISLE_EMOJI[r.aisle]}</span>
                     <span className="break-words text-left">{r.name}</span>
@@ -143,14 +143,14 @@ export function ShoppingAddBar({ state, onAdd, onForget }: Props) {
 
             {state.recents.length > 0 && (
               <>
-                <div className="h-px mx-4" style={{ backgroundColor: '#EEF2F8' }} />
+                <div className="h-px mx-4" style={{ backgroundColor: '#ECECEE' }} />
                 <button
                   type="button"
                   onClick={() => { haptic('light'); setHistoryOpen((o) => !o); }}
                   aria-expanded={historyOpen}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left tap active:bg-surface-hi transition-colors"
                 >
-                  <span className="shrink-0 grid place-items-center w-8 h-8 rounded-full" style={{ backgroundColor: '#F4F7FD' }}>
+                  <span className="shrink-0 grid place-items-center w-8 h-8 rounded-full" style={{ backgroundColor: '#F5F5F7' }}>
                     <History size={16} className="text-text-muted" />
                   </span>
                   <span className="flex-1 min-w-0 text-[15px] font-medium text-text">Déjà acheté</span>

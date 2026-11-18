@@ -67,7 +67,7 @@ export function WeightPage() {
   }, [bfPoints]);
 
   return (
-    <div className="space-y-4 px-5 pb-5">
+    <div className="space-y-4 px-4 pb-6">
       <PageHeader
         title="Poids"
         subtitle="Suivi quotidien"

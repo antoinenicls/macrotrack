@@ -54,26 +54,26 @@ export function DashboardPage() {
   const remaining = Math.max(0, targets.kcal - totals.kcal);
 
   return (
-    <div className="space-y-3 px-5 pb-5">
+    <div className="space-y-3 px-4 pb-6">
       <PageHeader subtitle={formatHumanDate(date)} title="Aujourd'hui" />
 
       {/* Calories (le chiffre clé, en tête) puis les 3 macros */}
       <Card className="!p-4 space-y-3">
         <div>
           <div className="flex items-baseline justify-between mb-2">
-            <span className="text-sm" style={{ color: '#111827' }}>
+            <span className="text-sm" style={{ color: '#1D1D1F' }}>
               <span className="text-2xl font-extrabold tabular-nums">{Math.round(totals.kcal)}</span>
-              <span style={{ color: '#6B7280' }}> / {fmtKcal(targets.kcal)}</span>
+              <span style={{ color: '#6E6E73' }}> / {fmtKcal(targets.kcal)}</span>
             </span>
-            <span className="text-xs font-medium" style={{ color: '#6B7280' }}>
+            <span className="text-xs font-medium" style={{ color: '#6E6E73' }}>
               {remaining > 0
-                ? <>Reste <span className="font-bold" style={{ color: '#111827' }}>{fmtKcal(remaining)}</span></>
+                ? <>Reste <span className="font-bold" style={{ color: '#1D1D1F' }}>{fmtKcal(remaining)}</span></>
                 : <>Cible atteinte 🎯</>}
             </span>
           </div>
           <ProgressBar value={totals.kcal} max={targets.kcal} color="rgb(var(--c-brand))" height={10} />
           {carryIn > 0 && (
-            <div className="text-xs mt-1.5" style={{ color: '#6B7280' }}>
+            <div className="text-xs mt-1.5" style={{ color: '#6E6E73' }}>
               Cible allégée de {fmtKcal(carryIn)} : report d'un repas estimé des jours précédents.
             </div>
           )}

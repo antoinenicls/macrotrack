@@ -13,7 +13,8 @@ interface Props<T extends string> {
 
 export function SegmentedControl<T extends string>({ options, value, onChange }: Props<T>) {
   return (
-    <div className="inline-flex bg-surface-hi rounded-xl p-1 gap-1 w-full">
+    // Segments façon iOS / GymTrack : piste grise, segment actif blanc en relief, texte bleu.
+    <div className="flex w-full gap-1 rounded-xl bg-alt p-1">
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -21,8 +22,8 @@ export function SegmentedControl<T extends string>({ options, value, onChange }:
             key={o.value}
             onClick={() => { if (!active) haptic('selection'); onChange(o.value); }}
             className={[
-              'flex-1 h-9 rounded-lg text-sm font-medium transition-colors',
-              active ? 'bg-brand text-white' : 'text-text-muted active:text-text'
+              'pressable min-h-[36px] flex-1 rounded-lg px-1 text-[13px] font-bold leading-tight transition-colors',
+              active ? 'bg-white text-brand shadow-sm' : 'text-text-muted active:text-text'
             ].join(' ')}
           >
             {o.label}

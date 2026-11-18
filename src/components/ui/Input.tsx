@@ -14,14 +14,15 @@ export const Input = forwardRef<HTMLInputElement, Props>(function Input(
   const inputId = id ?? rest.name;
   return (
     <label htmlFor={inputId} className="block">
-      {label && <span className="block text-sm text-text-muted mb-1.5">{label}</span>}
+      {label && <span className="block text-[13px] font-semibold text-text-muted mb-1.5">{label}</span>}
       <div className="relative">
         <input
           id={inputId}
           ref={ref}
           className={[
-            'w-full h-12 px-3 rounded-xl bg-surface-hi border border-border text-text placeholder:text-text-muted/60',
-            'focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/30',
+            // Champ façon GymTrack : fond gris sans bordure, bleuté au focus.
+            'w-full h-12 px-3.5 rounded-xl bg-alt border border-transparent text-text placeholder:text-text-faint',
+            'transition-colors focus:outline-none focus:bg-brand-soft focus:border-brand/40',
             suffix ? 'pr-12' : '',
             error ? 'border-danger' : '',
             className

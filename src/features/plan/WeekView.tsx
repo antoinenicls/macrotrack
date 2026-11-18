@@ -511,7 +511,7 @@ export function WeekView({ open, onClose }: Props) {
         <Check size={14} strokeWidth={3} className="text-white" />
       </span>
     ) : (
-      <span className="shrink-0 w-6 h-6 rounded-full border-2" style={{ borderColor: '#C9D3E6' }} />
+      <span className="shrink-0 w-6 h-6 rounded-full border-2" style={{ borderColor: '#D1D1D6' }} />
     );
     const justMoved = revealExtraId === extra.id;
     return (
@@ -519,7 +519,7 @@ export function WeekView({ open, onClose }: Props) {
         key={key}
         ref={(el) => { if (el) extraRefs.current.set(extra.id, el); else extraRefs.current.delete(extra.id); }}
         // scroll-mt : garde l'en-tête du rayon visible quand on ramène la ligne à l'écran.
-        className={`scroll-mt-10 scroll-mb-4 transition-colors duration-500 ${justMoved ? 'bg-brand/10' : editing ? 'bg-[#F7F9FE]' : ''}`}
+        className={`scroll-mt-10 scroll-mb-4 transition-colors duration-500 ${justMoved ? 'bg-brand/10' : editing ? 'bg-[#F5F5F7]' : ''}`}
       >
         <div className="flex items-center">
           <button
@@ -551,10 +551,10 @@ export function WeekView({ open, onClose }: Props) {
               aria-label="Nom de l'article"
               enterKeyHint="done"
               maxLength={60}
-              className="w-full h-11 px-3 rounded-xl bg-surface-hi border border-border text-[15px] text-text focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
+              className="w-full h-11 px-3 rounded-xl bg-alt text-[15px] text-text focus:outline-none focus:bg-brand-soft"
             />
             {/* Rayon : menu déroulant natif (roue iOS), compact et lisible */}
-            <label className="relative flex items-center h-11 rounded-xl bg-surface-hi border border-border focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/30">
+            <label className="relative flex items-center h-11 rounded-xl bg-alt focus-within:bg-brand-soft">
               <span className="pl-3 pr-2 text-xs font-semibold text-text-muted shrink-0">Rayon</span>
               <span className="flex-1 min-w-0 flex items-center gap-1.5 text-[15px] font-medium text-text">
                 <span className="leading-none">{AISLE_EMOJI[extra.aisle]}</span>
@@ -622,7 +622,7 @@ export function WeekView({ open, onClose }: Props) {
         <Check size={14} strokeWidth={3} className="text-brand" />
       </span>
     ) : (
-      <span className="shrink-0 w-6 h-6 rounded-full border-2" style={{ borderColor: '#C9D3E6' }} />
+      <span className="shrink-0 w-6 h-6 rounded-full border-2" style={{ borderColor: '#D1D1D6' }} />
     );
 
     const text = (
@@ -709,7 +709,7 @@ export function WeekView({ open, onClose }: Props) {
   /** Liste d'articles dans une carte blanche, lignes séparées par un filet. */
   const listCard = (lines: ListLine[]) => (
     <Card className="!p-0 overflow-hidden">
-      <ul className="divide-y divide-[#EEF2F8]">
+      <ul className="divide-y divide-[#ECECEE]">
         {lines.map((l) => (l.kind === 'food' ? renderLine(l.line, getStatus(l.line)) : renderExtraLine(l.extra)))}
       </ul>
     </Card>
@@ -853,7 +853,7 @@ export function WeekView({ open, onClose }: Props) {
                 <span className="font-semibold text-text">Séances prévues</span>
                 <br />galettes, miel, banane
               </div>
-              <div className="shrink-0 flex items-center gap-1 rounded-xl p-1" style={{ backgroundColor: '#F4F7FD' }}>
+              <div className="shrink-0 flex items-center gap-1 rounded-xl p-1" style={{ backgroundColor: '#F5F5F7' }}>
                 <button
                   type="button"
                   aria-label="Une séance de moins"
@@ -924,7 +924,7 @@ export function WeekView({ open, onClose }: Props) {
         <div className="space-y-2 pt-2">
           <div className="flex items-center gap-2 px-1">
             <CalendarRange size={16} className="text-text-muted" />
-            <h3 className="text-sm uppercase tracking-wide text-text-muted">Détail par jour</h3>
+            <h3 className="section-label">Détail par jour</h3>
           </div>
           {weekTotals.map((day) => {
             const isToday = day.date === today;

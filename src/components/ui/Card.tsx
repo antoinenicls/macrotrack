@@ -5,18 +5,14 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Card avec bg + couleur HARDCODED pour bulletproof anti-cache et anti-dark.
+ * Carte, même dessin que GymTrack : blanche, filet fin, rayon 20 px, sans ombre.
+ * Le fond et la couleur restent en dur (rendu clair garanti même si iOS force le sombre).
  */
 export function Card({ children, className = '', style, ...rest }: Props) {
   return (
     <div
-      className={['rounded-3xl shadow-card p-5', className].join(' ')}
-      style={{
-        backgroundColor: '#FFFFFF',
-        color: '#111827',
-        border: '1px solid rgba(216, 227, 248, 0.8)',
-        ...style
-      }}
+      className={['rounded-card border border-border p-4', className].join(' ')}
+      style={{ backgroundColor: '#FFFFFF', color: '#1D1D1F', ...style }}
       {...rest}
     >
       {children}

@@ -148,7 +148,7 @@ export function DietProfilePanel() {
       </div>
 
       {nExcludedFoods > 0 && (
-        <div className="flex items-start gap-2 rounded-xl bg-surface-hi border border-border px-3 py-2.5">
+        <div className="flex items-start gap-2 rounded-xl bg-alt px-3 py-2.5">
           <ShieldAlert size={15} className="text-text-muted shrink-0 mt-0.5" />
           <span className="text-[11px] text-text-muted">
             {nExcludedFoods} aliment{nExcludedFoods > 1 ? 's sont écartés' : ' est écarté'} de ta

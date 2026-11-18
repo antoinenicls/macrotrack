@@ -11,33 +11,39 @@ const tabs = [
 ];
 
 /**
- * Bottom tab bar — bg + couleurs HARDCODED en blanc pour éviter le rendu dark de Safari iOS.
+ * Barre d'onglets, même dessin que GymTrack : posée dans le flux du shell (pas par-dessus
+ * le contenu), filet fin, onglet actif en bleu avec l'icône légèrement grossie (repérage
+ * périphérique sans lire le libellé).
  */
 export function BottomTabBar() {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30"
-      style={{
-        backgroundColor: '#FFFFFF',
-        borderTop: '1px solid rgb(216, 227, 248)',
-        paddingBottom: 'env(safe-area-inset-bottom)'
-      }}
+      className="relative z-30 shrink-0 border-t border-border bg-white/95 backdrop-blur"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       role="tablist"
     >
-      <ul className="grid grid-cols-5 h-[52px]">
+      <ul className="flex">
         {tabs.map((t) => (
-          <li key={t.to}>
+          <li key={t.to} className="flex-1">
             <NavLink
               to={t.to}
               end={t.to === '/'}
               onClick={() => haptic('light')}
-              className="h-full flex flex-col items-center justify-center gap-1 tap no-select transition-colors"
-              style={({ isActive }) => ({
-                color: isActive ? '#0060DF' : '#6B7280'
-              })}
+              className={({ isActive }) =>
+                [
+                  'pressable flex min-h-[52px] flex-col items-center justify-center gap-1 pb-1 pt-2 no-select',
+                  isActive ? 'text-brand' : 'text-text-faint'
+                ].join(' ')
+              }
             >
-              <t.icon size={22} strokeWidth={2} />
-              <span className="text-[10px] font-medium leading-none">{t.label}</span>
+              {({ isActive }) => (
+                <>
+                  <span className={`transition-transform duration-300 ease-ease ${isActive ? 'scale-110' : 'scale-100'}`}>
+                    <t.icon size={22} strokeWidth={isActive ? 2.4 : 2} />
+                  </span>
+                  <span className="text-[10px] font-semibold leading-none tracking-tight">{t.label}</span>
+                </>
+              )}
             </NavLink>
           </li>
         ))}

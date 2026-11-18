@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { useSheetDrag } from './useSheetDrag';
 
 interface Props {
@@ -82,17 +82,20 @@ export function Sheet({ open, onClose, title, children, fullScreen = false }: Pr
     };
   }, [open, onClose]);
 
-  return (
+  // Rendue dans un PORTAIL sur le body, hors de l'arborescence de l'app : ni la zone qui
+  // défile ni l'animation de changement d'onglet (transform) ne peuvent la contenir ou
+  // passer devant.
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
           <motion.div
             key="bg"
-            className="fixed inset-0 bg-black/60 z-40"
+            className="fixed inset-0 bg-black/25 z-40"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
+            transition={{ duration: 0.2 }}
             onClick={onClose}
           />
           <motion.div
@@ -121,10 +124,11 @@ export function Sheet({ open, onClose, title, children, fullScreen = false }: Pr
                     maxHeight: vvHeight != null ? `${vvHeight * 0.92}px` : undefined
                   }
             }
+            // Mêmes courbes que GymTrack : montée franche qui se pose en douceur,
+            // descente plus rapide.
             initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+            animate={{ y: 0, transition: { duration: 0.32, ease: [0.16, 1, 0.3, 1] } }}
+            exit={{ y: '100%', transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
           >
             {/* Panneau visible. Distinct du conteneur animé : le glissement vers le bas
                 le décale lui (style inline), sans entrer en conflit avec l'animation
@@ -133,31 +137,34 @@ export function Sheet({ open, onClose, title, children, fullScreen = false }: Pr
               ref={panelRef}
               className={[
                 'flex flex-col flex-1 min-h-0 bg-surface',
-                fullScreen ? '' : 'rounded-t-3xl border-t border-border'
+                fullScreen ? '' : 'rounded-t-[24px]'
               ].join(' ')}
             >
             {/* Header — fixe en haut */}
-            <div className={['relative px-4 shrink-0', fullScreen ? 'pt-safe' : ''].join(' ')}>
+            {/* En-tête façon GymTrack : titre Plus Jakarta, « Fermer » en texte, filet. */}
+            <div className={['relative shrink-0 border-b border-border', fullScreen ? 'pt-safe' : ''].join(' ')}>
               {/* Poignée : indique que la feuille se ferme en glissant vers le bas */}
-              {!fullScreen && <div aria-hidden className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-border" />}
-              <div className={fullScreen ? 'pt-4' : 'pt-1'}>
-                <div className="flex items-center">
-                  {title && <h3 className="font-semibold text-base">{title}</h3>}
-                  <button
-                    aria-label="Fermer"
-                    onClick={onClose}
-                    className="ml-auto tap text-text-muted active:text-text"
-                  >
-                    <X size={22} />
-                  </button>
-                </div>
+              {!fullScreen && <div aria-hidden className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-black/15" />}
+              <div className={['flex items-center gap-3 pl-4 pr-1.5 pb-1.5', fullScreen ? 'pt-2' : 'pt-0.5'].join(' ')}>
+                {title && (
+                  <h3 className="min-w-0 flex-1 font-display text-[17px] font-extrabold leading-tight tracking-[-0.03em]">
+                    {title}
+                  </h3>
+                )}
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="pressable ml-auto min-h-[44px] shrink-0 rounded-pill px-3 font-display text-[15px] font-bold text-text-muted active:bg-alt"
+                >
+                  Fermer
+                </button>
               </div>
             </div>
 
             {/* Contenu scrollable — prend la hauteur restante */}
             <div
               ref={scrollRef}
-              className="flex-1 min-h-0 overflow-y-auto px-4 pt-2"
+              className="flex-1 min-h-0 overflow-y-auto px-4 pt-3"
               style={{
                 overscrollBehavior: 'contain',
                 WebkitOverflowScrolling: 'touch',
@@ -171,6 +178,7 @@ export function Sheet({ open, onClose, title, children, fullScreen = false }: Pr
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

@@ -18,17 +18,18 @@ export function ToggleRow({ label, description, checked, onToggle }: Props) {
       onClick={onToggle}
       role="switch"
       aria-checked={checked}
-      className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-surface-hi tap active:bg-surface text-left"
+      className="w-full flex items-center justify-between gap-3 px-3.5 py-3 rounded-xl bg-alt tap text-left"
     >
       <div className="flex-1 pr-3">
-        <div className="text-sm font-semibold">{label}</div>
-        {description && <div className="text-xs text-text-muted mt-0.5 leading-snug">{description}</div>}
+        <div className="text-[15px] font-semibold leading-snug">{label}</div>
+        {description && <div className="text-[13px] text-text-muted mt-0.5 leading-snug">{description}</div>}
       </div>
+      {/* Interrupteur iOS, même dessin que GymTrack (vert quand actif). */}
       <span
-        className={['shrink-0 w-11 h-6 rounded-full relative transition-colors', checked ? 'bg-brand' : 'bg-border'].join(' ')}
+        className={['relative h-[31px] w-[51px] shrink-0 rounded-pill transition-colors duration-200', checked ? 'bg-success' : 'bg-black/10'].join(' ')}
         aria-hidden
       >
-        <span className={['absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all', checked ? 'left-[22px]' : 'left-0.5'].join(' ')} />
+        <span className={['absolute top-[2px] h-[27px] w-[27px] rounded-full bg-white shadow transition-transform duration-200', checked ? 'translate-x-[22px]' : 'translate-x-[2px]'].join(' ')} />
       </span>
     </button>
   );

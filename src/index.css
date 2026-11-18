@@ -3,67 +3,74 @@
 @tailwind utilities;
 
 /* ===========================================================================
- *  Palette inspirée des références utilisateur — LIGHT ONLY.
- *  Pas de mode sombre. iOS Safari force-light via color-scheme + meta.
+ *  Palette commune à GymTrack — LIGHT ONLY.
+ *  Fond blanc, cartes blanches à filet fin (pas d'ombre), gris « alt » pour les
+ *  champs et segments, bleu #0A84FF. iOS Safari force-light via color-scheme + meta.
  * =========================================================================== */
 :root {
   color-scheme: light only;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  /* Hauteur réelle du viewport, recalculée en JS (main.tsx) : sur mobile, 100vh
+     compte la barre d'URL rétractile et déborde. */
+  --vh: 100dvh;
 
-  /* —— Surfaces (crème bleutée, accordée au logo) —— */
-  --c-bg:         238 243 254;  /* #EEF3FE — pale blue cream */
-  --c-surface:    255 255 255;  /* cartes pure white */
-  --c-surface-hi: 245 248 255;  /* #F5F8FF — champs très clairs */
-  --c-border:     216 227 248;  /* #D8E3F8 */
+  /* —— Surfaces —— */
+  --c-bg:         255 255 255;  /* #FFFFFF */
+  --c-surface:    255 255 255;  /* cartes */
+  --c-surface-hi: 245 245 247;  /* #F5F5F7 — champs, segments, pastilles */
+  --c-border:     236 236 238;  /* ≈ rgba(0,0,0,.07) sur blanc */
 
-  /* —— Texte (noir profond pour grand contraste) —— */
-  --c-text:       17 24 39;     /* #111827 — quasi noir */
-  --c-text-muted: 107 114 128;  /* #6B7280 — gris neutre */
+  /* —— Texte —— */
+  --c-text:       29 29 31;     /* #1D1D1F */
+  --c-text-muted: 110 110 115;  /* #6E6E73 */
+  --c-text-faint: 176 176 184;  /* #B0B0B8 */
 
   /* —— Brand : le bleu commun à GymTrack et MacroTrack —— */
-  --c-brand:      10 132 255;   /* #0A84FF — aplats (boutons), = le bleu du logo */
-  --c-brand-hi:   0 96 223;     /* #0060DF — texte/accents, plus contrasté */
+  --c-brand:      10 132 255;   /* #0A84FF */
+  --c-brand-hi:   0 96 223;     /* #0060DF */
+  --c-brand-soft: 240 247 255;  /* #F0F7FF */
 
   /* —— États —— */
-  --c-success:    138 198 64;   /* vert : sémantique « ça va », indépendant du brand */
-  --c-warn:       243 205 63;
-  --c-danger:     243 99 99;
+  --c-success:    16 185 129;   /* #10B981 */
+  --c-warn:       245 158 11;   /* #F59E0B */
+  --c-danger:     239 68 68;    /* #EF4444 */
 
   /* —— Macros (kcal = brand ; les 3 macros restent distinctes pour la lisibilité) —— */
-  --c-kcal:       10 132 255;   /* bleu (brand) */
+  --c-kcal:       10 132 255;
   --c-protein:    243 99 99;    /* coral */
   --c-carbs:      244 165 75;   /* orange peach */
   --c-fat:        178 160 224;  /* lavande */
 
   /* —— Couleurs des cartes par repas —— */
-  --c-slot-pd:    164 216 91;  /* petit-déj : vert lime (hors identité bleue, cf. MealCard) */
-  --c-slot-dj:    243 216 67;   /* déjeuner : jaune */
-  --c-slot-dn:    244 165 113;  /* dîner : peach orange */
-  --c-slot-co:    178 160 224;  /* collation : lavande */
+  --c-slot-pd:    164 216 91;
+  --c-slot-dj:    243 216 67;
+  --c-slot-dn:    244 165 113;
+  --c-slot-co:    178 160 224;
 
   /* —— Track des anneaux/progress —— */
-  --c-track: 17 24 39;
+  --c-track: 29 29 31;
   --track-alpha: 0.06;
 
-  /* —— Ombre cartes propre —— */
-  --shadow-card: 0 2px 6px rgba(17, 24, 39, 0.04), 0 8px 24px -8px rgba(17, 24, 39, 0.08);
+  --shadow-card: none;
 }
 
 /* ===========================================================================
- *  Reset / base + typographie premium
- *  Hardcoded en plus des vars pour bulletproof anti-cache et anti-dark-mode.
+ *  Base
  * =========================================================================== */
 html {
   font-size: 17px;
   color-scheme: light only;
-  background-color: #EEF3FE;
-  background-color: rgb(var(--c-bg));
+  background-color: #FFFFFF;
+  /* Coupe le rebond élastique de la page : l'app doit se sentir rigide, comme du
+     natif. Seule la zone de contenu (<main>) défile. */
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
 }
 
 html, body, #root {
   height: 100%;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
-  overscroll-behavior-x: none;
   overflow-x: hidden;
 }
 
@@ -71,19 +78,99 @@ body {
   font-family: theme('fontFamily.sans');
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  background-color: #EEF3FE;
-  background-color: rgb(var(--c-bg));
-  color: #111827;
-  color: rgb(var(--c-text));
-  letter-spacing: -0.01em;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #FFFFFF;
+  color: #1D1D1F;
+  overscroll-behavior: contain;
+  /* Pas de sélection accidentelle en enchaînant les taps. */
+  -webkit-user-select: none;
+  user-select: none;
 }
 
-#root { background-color: #EEF3FE; }
+#root { background-color: #FFFFFF; }
 
-h1, h2, h3, h4 { letter-spacing: -0.028em; color: #111827; color: rgb(var(--c-text)); }
+/* Là où l'on a une vraie raison de sélectionner du texte. */
+input, textarea, [data-selectable] { -webkit-user-select: text; user-select: text; }
+
+h1, h2, h3 {
+  font-family: theme('fontFamily.display');
+  letter-spacing: -0.03em;
+  color: #1D1D1F;
+}
+h4 { letter-spacing: -0.01em; color: #1D1D1F; }
+
+/* Les très gras (titres, gros chiffres) passent en Plus Jakarta, comme dans GymTrack :
+   Inter n'est chargée que jusqu'au 700, et c'est cette police qui donne le caractère. */
+.font-extrabold, .font-black { font-family: theme('fontFamily.display'); letter-spacing: -0.03em; }
 
 input, select, textarea, button { font-size: 16px; color: inherit; }
 button { -webkit-appearance: none; appearance: none; }
+
+/* Les flèches de spinner sur les inputs number sont inutilisables au pouce. */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type='number'] { -moz-appearance: textfield; }
+
+*:focus-visible { outline: 2px solid #0A84FF; outline-offset: 3px; }
+
+/* ===========================================================================
+ *  Composants partagés (mêmes règles que GymTrack)
+ * =========================================================================== */
+@layer components {
+  .card { @apply rounded-card border border-border bg-white; }
+
+  .section-label {
+    @apply font-sans text-[11px] font-bold uppercase tracking-[2.5px] text-brand;
+  }
+
+  /* Chiffres tabulaires en Plus Jakarta : ils ne dansent pas d'une ligne à l'autre. */
+  .num {
+    font-family: theme('fontFamily.num');
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  /* Zone de scroll interne : le rebond reste dans la liste, la page ne bouge pas. */
+  .scroll-area {
+    @apply overflow-y-auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Réponse tactile : tout élément interactif s'enfonce légèrement sous le doigt.
+     C'est ce qui distingue une app d'une page web, et ça confirme le tap avant même
+     que l'action n'aboutisse. Transformation sur le GPU : aucun surcoût. */
+  .pressable, .tap {
+    transition:
+      transform 0.14s cubic-bezier(0.16, 1, 0.3, 1),
+      background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+      color 0.2s ease,
+      opacity 0.2s ease;
+  }
+  /* Écrit avec les variables de Tailwind : l'enfoncement se COMPOSE avec un éventuel
+     `-translate-y-1/2` ou `rotate-180` de l'élément au lieu de l'écraser (sinon un bouton
+     centré par translation sautait de sa place au toucher). */
+  .pressable:active, .tap:active {
+    --tw-scale-x: 0.965;
+    --tw-scale-y: 0.965;
+    transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate))
+      skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  }
+  /* Grandes cibles (lignes, boutons pleine largeur) : on enfonce moins, sinon l'effet
+     devient caricatural sur une grande surface. */
+  .pressable-wide:active,
+  .tap.w-full:active, .tap.flex-1:active, .tap.block:active { --tw-scale-x: 0.985; --tw-scale-y: 0.985; }
+
+  /* Entrée en cascade d'une liste, plafonnée à 8 éléments. */
+  .stagger > * { animation: item-in 0.34s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .stagger > *:nth-child(2) { animation-delay: 30ms; }
+  .stagger > *:nth-child(3) { animation-delay: 60ms; }
+  .stagger > *:nth-child(4) { animation-delay: 90ms; }
+  .stagger > *:nth-child(5) { animation-delay: 120ms; }
+  .stagger > *:nth-child(6) { animation-delay: 150ms; }
+  .stagger > *:nth-child(7) { animation-delay: 180ms; }
+  .stagger > *:nth-child(n + 8) { animation-delay: 210ms; }
+}
 
 /* ===========================================================================
  *  Safe-area helpers
@@ -99,34 +186,40 @@ button { -webkit-appearance: none; appearance: none; }
   .no-select  { user-select: none; -webkit-user-select: none; }
 }
 
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-thumb { background: rgb(var(--c-border)); border-radius: 8px; }
+::-webkit-scrollbar { width: 0; height: 0; }
 
 /* ===========================================================================
- *  Override BULLETPROOF de tous les bg/text Tailwind utilisés dans l'app
- *  Garantit que même si une CSS variable foire, les classes critiques restent
- *  clairs avec texte foncé. Anti-cache + anti-dark-mode iOS.
+ *  Valeurs en dur des classes critiques : garantit le rendu clair même si une
+ *  variable CSS manque (ancien cache, mode sombre forcé d'iOS).
  * =========================================================================== */
-.bg-bg            { background-color: #EEF3FE !important; }
+.bg-bg            { background-color: #FFFFFF !important; }
 .bg-surface       { background-color: #FFFFFF !important; }
-.bg-surface-hi    { background-color: #F5F8FF !important; }
-.text-text        { color: #111827 !important; }
-.text-text-muted  { color: #6B7280 !important; }
-.border-border    { border-color: #D8E3F8 !important; }
-.text-brand       { color: #0060DF !important; }
+.bg-surface-hi    { background-color: #F5F5F7 !important; }
+.text-text        { color: #1D1D1F !important; }
+.text-text-muted  { color: #6E6E73 !important; }
+.border-border    { border-color: #ECECEE !important; }
+.text-brand       { color: #0A84FF !important; }
 .bg-brand         { background-color: #0A84FF !important; color: #FFFFFF !important; }
-.bg-brand\/15     { background-color: rgba(10, 132, 255, 0.15) !important; }
-.bg-brand\/10     { background-color: rgba(10, 132, 255, 0.10) !important; }
-.border-brand\/30 { border-color: rgba(10, 132, 255, 0.30) !important; }
-.border-brand\/40 { border-color: rgba(10, 132, 255, 0.40) !important; }
-.text-success     { color: #8AC640 !important; }
-.text-warn        { color: #E69F1E !important; }
-.text-danger      { color: #E55858 !important; }
+.bg-brand\/15     { background-color: rgba(10, 132, 255, 0.12) !important; }
+.bg-brand\/10     { background-color: #F0F7FF !important; }
+.border-brand\/30 { border-color: #CCE4FF !important; }
+.border-brand\/40 { border-color: #CCE4FF !important; }
+.text-success     { color: #10B981 !important; }
+.text-warn        { color: #D97706 !important; }
+.text-danger      { color: #DC2626 !important; }
 
-/* Validation "coché" : pop + fondu court de la case verte avant la bascule au panier. */
+/* Validation "coché" : pop + fondu court de la case avant la bascule au panier. */
 @keyframes check-pop {
   0%   { transform: scale(0.4); opacity: 0; }
   55%  { transform: scale(1.12); opacity: 1; }
   100% { transform: scale(1);   opacity: 1; }
 }
 .animate-check-pop { animation: check-pop 0.14s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

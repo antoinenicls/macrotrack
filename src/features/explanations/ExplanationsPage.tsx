@@ -82,7 +82,7 @@ export function ExplanationsPage() {
 
   if (!profile || !settings || !ctx) {
     return (
-      <div className="px-5 pb-5">
+      <div className="px-4 pb-6">
         <PageHeader title="Explications" subtitle="Guide & calculs" />
       </div>
     );
@@ -107,7 +107,7 @@ export function ExplanationsPage() {
     .filter((g) => g.items.length > 0);
 
   return (
-    <div className="space-y-4 px-5 pb-5">
+    <div className="space-y-4 px-4 pb-6">
       <PageHeader title="Explications" subtitle="Guide & calculs" />
 
       {/* Recherche */}
@@ -123,7 +123,7 @@ export function ExplanationsPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Rechercher : séance, resto, protéines…"
-            className={`w-full h-12 pl-11 pr-12 rounded-2xl bg-surface border border-border text-[16px] text-text placeholder:text-text-muted [&::-webkit-search-cancel-button]:appearance-none ${FOCUS_RING}`}
+            className={`w-full h-12 pl-11 pr-12 rounded-xl bg-alt text-[16px] text-text placeholder:text-text-faint transition-colors focus:bg-brand-soft [&::-webkit-search-cancel-button]:appearance-none ${FOCUS_RING}`}
           />
           {query && (
             <button
@@ -148,8 +148,8 @@ export function ExplanationsPage() {
                   onClick={() => { if (!active) haptic('selection'); setFilter(g.id); }}
                   aria-pressed={active}
                   className={[
-                    'h-10 px-3.5 rounded-full text-[14px] font-semibold inline-flex items-center gap-1.5 transition-colors',
-                    active ? 'bg-brand text-white' : 'bg-surface-hi text-text border border-border active:bg-surface',
+                    'pressable min-h-[38px] px-3.5 rounded-pill text-[13px] font-semibold inline-flex items-center gap-1.5 transition-colors',
+                    active ? 'bg-brand text-white' : 'bg-alt text-text-muted',
                     FOCUS_RING
                   ].join(' ')}
                 >
@@ -165,7 +165,7 @@ export function ExplanationsPage() {
       {/* Chiffres clés — seulement dans la vue d'ensemble ou le thème Calories */}
       {!searching && (filter === 'all' || filter === 'calories') && (
         <Card className="space-y-3 !p-4">
-          <h2 className="text-[13px] font-semibold uppercase tracking-wide text-text-muted">Tes chiffres en direct</h2>
+          <h2 className="section-label">Tes chiffres en direct</h2>
           <div className="grid grid-cols-3 gap-2">
             <Stat label="Au repos" value={fmtKcal(ctx.restingBmr)} />
             <Stat label="Maintenance" value={fmtKcal(ctx.maintenance)} />

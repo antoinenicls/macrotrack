@@ -9,6 +9,11 @@ import type { ChangelogEntry } from '@/lib/whatsNew';
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-11-18-nouveau-look',
+    title: 'Nouveau look',
+    body: "Même allure que GymTrack : nouvelle police, cartes plus légères, boutons qui réagissent au toucher. L'app s'ouvre aussi plus vite et marche hors ligne."
+  },
+  {
     id: '2026-11-18-quoi-de-neuf',
     title: "Les nouveautés, à l'ouverture",
     body: "Les nouveautés s'affichent ici à l'ouverture, une seule fois. Tu les retrouves dans Plan › Réglages."

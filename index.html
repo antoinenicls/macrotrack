@@ -5,7 +5,7 @@
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1" />
-    <meta name="theme-color" content="#EEF3FE" />
+    <meta name="theme-color" content="#FFFFFF" />
     <!-- CRITIQUE : force iOS Safari à utiliser le rendu CLAIR, sinon
          WebKit applique des styles dark par défaut quand l'iPhone est en mode sombre. -->
     <meta name="color-scheme" content="light only" />
@@ -17,30 +17,22 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="MacroTrack" />
     <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+    <meta name="format-detection" content="telephone=no" />
 
-    <!-- Force bg cream inline : impossible à surcharger par un CSS en cache.
-         Si tout casse, au moins le fond reste lisible. -->
+    <!-- Typographie commune à GymTrack : Plus Jakarta Sans (titres, chiffres) + Inter
+         (texte). Mise en cache par le service worker : disponible hors ligne. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Fond blanc inline : lisible même avant le chargement du CSS. -->
     <style>
-      /* Force light scheme : indique au navigateur que cette app est pensée light only. */
       :root, html, body { color-scheme: light only; }
-      html, body { background-color: #EEF3FE !important; color: #111827 !important; }
+      html, body { background-color: #FFFFFF; color: #1D1D1F; }
     </style>
-
-    <!-- Kill switch : unregistre tout service worker existant qui pourrait
-         servir une version stale du CSS/JS. Garantit que la prochaine ouverture
-         charge depuis le serveur, pas depuis le cache PWA. -->
-    <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(regs) {
-          regs.forEach(function(r) { r.unregister(); });
-        }).catch(function() {});
-        if (window.caches && caches.keys) {
-          caches.keys().then(function(keys) {
-            keys.forEach(function(k) { caches.delete(k); });
-          }).catch(function() {});
-        }
-      }
-    </script>
 
     <title>MacroTrack</title>
   </head>

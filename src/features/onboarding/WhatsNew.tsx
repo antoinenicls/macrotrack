@@ -73,7 +73,7 @@ export function WhatsNew() {
             <li key={e.id} className="py-3 first:pt-0">
               <div className="flex items-baseline justify-between gap-3">
                 <h4 className="text-[15px] font-semibold leading-snug">{e.title}</h4>
-                <span className="shrink-0 text-xs text-text-muted capitalize">{formatShortDate(entryDate(e))}</span>
+                <span className="shrink-0 text-xs text-text-muted">{formatShortDate(entryDate(e))}</span>
               </div>
               <p className="mt-1 text-sm text-text-muted leading-snug">{e.body}</p>
             </li>

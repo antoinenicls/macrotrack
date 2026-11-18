@@ -172,13 +172,13 @@ export function GuideSection({
         <button
           id={btnId}
           onClick={() => { haptic('light'); onToggle(); }}
-          className={`w-full flex items-center gap-3 px-4 py-3.5 text-left tap active:bg-surface-hi rounded-3xl ${FOCUS_RING}`}
+          className={`w-full flex items-center gap-3 px-4 py-3.5 text-left font-sans tracking-normal tap ${FOCUS_RING}`}
           aria-expanded={open}
           aria-controls={panelId}
         >
-          <span aria-hidden className="rounded-xl bg-brand/15 text-brand p-2 shrink-0"><Icon size={20} /></span>
+          <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand"><Icon size={20} /></span>
           <span className="flex-1 min-w-0">
-            <span className="block font-semibold text-[16px] leading-snug">{title}</span>
+            <span className="block font-semibold text-[15px] leading-snug">{title}</span>
             <span className="block text-[13px] text-text-muted leading-snug mt-0.5 font-normal">{summary}</span>
           </span>
           <motion.span aria-hidden animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }} className="shrink-0">

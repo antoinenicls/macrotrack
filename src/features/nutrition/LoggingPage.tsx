@@ -173,7 +173,7 @@ export function LoggingPage() {
   void foodsLen;
 
   return (
-    <div className="space-y-4 px-5 pb-5">
+    <div className="space-y-4 px-4 pb-6">
       <PageHeader subtitle={isToday ? "Aujourd'hui" : formatHumanDate(date)} title={isToday ? 'Repas' : 'Repas'} />
 
       {/* Bouton vue semaine — en haut comme demandé, accessible toujours */}

@@ -41,6 +41,8 @@ export interface AppSettings {
   /** Version de la rotation hebdomadaire appliquée — bumped si on doit re-pousser. */
   lastRotationVersion?: number;
   iosPromptDismissedAt?: number;
+  /** Dernière nouveauté vue dans « Quoi de neuf » (id `AAAA-MM-JJ-sujet`). */
+  whatsNewSeenId?: string;
   /** Active les retours haptiques (Android uniquement à ce jour). Par défaut true. */
   hapticEnabled?: boolean;
   /**

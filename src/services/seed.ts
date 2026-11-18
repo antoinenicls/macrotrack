@@ -9,6 +9,8 @@ import { applyFoodSwaps } from '@/lib/swap';
 import { applyMealStructure } from '@/lib/mealStructure';
 import { injectAddonFoods } from '@/lib/addons';
 import type { AddonFood } from '@/types';
+import { CHANGELOG } from '@/data/changelog';
+import { latestId } from '@/lib/whatsNew';
 
 /**
  * Appoint livré par défaut : crème de riz Nutrimuscle en collation (créneau pré-training).
@@ -47,6 +49,8 @@ export async function ensureSeeded(): Promise<void> {
       theme: 'light',
       units: 'metric',
       lastSeedVersion: 0,
+      // Installation neuve : rien à annoncer, toutes les nouveautés actuelles sont « vues ».
+      whatsNewSeenId: latestId(CHANGELOG),
       planTemplate: SEED_PLAN_TEMPLATE,
       // Coach ACTIF dès le 1er lancement : sans ça, la cible reste figée à la
       // valeur seed et ne reflète jamais la tendance de poids réelle (= "pas de

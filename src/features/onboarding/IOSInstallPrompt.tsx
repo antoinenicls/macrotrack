@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Sheet, Button, Card } from '@/components/ui';
 import { ChevronRight, Share, PlusSquare, Smartphone } from 'lucide-react';
 import { useProfileStore } from '@/store/profileStore';
+import type { AppSettings } from '@/types';
 
 /**
  * Détecte Safari iOS hors mode standalone.
@@ -41,6 +42,17 @@ export function canInstallFromSafari(): boolean {
   return isIOS() && !isStandalone();
 }
 
+/**
+ * L'invitation va-t-elle s'ouvrir d'elle-même : Safari iOS, pas installée, pas écartée
+ * depuis moins de 14 jours. « Quoi de neuf » s'efface alors pour ne pas empiler deux fenêtres.
+ */
+export function installPromptDue(settings: Pick<AppSettings, 'iosPromptDismissedAt'>): boolean {
+  if (!canInstallFromSafari()) return false;
+  const dismissed = settings.iosPromptDismissedAt;
+  const TWO_WEEKS = 14 * 24 * 3600 * 1000;
+  return !(dismissed && Date.now() - dismissed < TWO_WEEKS);
+}
+
 /** Rouvre l'invitation, sans délai ni tenir compte d'un refus passé. */
 export function openInstallPrompt(): void {
   window.dispatchEvent(new Event(OPEN_EVENT));
@@ -58,11 +70,7 @@ export function IOSInstallPrompt() {
   }, []);
 
   useEffect(() => {
-    if (!settings) return;
-    if (!isIOS() || isStandalone()) return;
-    const dismissed = settings.iosPromptDismissedAt;
-    const TWO_WEEKS = 14 * 24 * 3600 * 1000;
-    if (dismissed && Date.now() - dismissed < TWO_WEEKS) return;
+    if (!settings || !installPromptDue(settings)) return;
     // Petit délai pour ne pas se déclencher pendant le 1er paint
     const t = setTimeout(() => setOpen(true), 1500);
     return () => clearTimeout(t);

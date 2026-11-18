@@ -14,6 +14,7 @@ import { EstimateCarrySettings } from './EstimateCarrySettings';
 import { DataPanel } from './DataPanel';
 import { FeedbackCard } from '@/features/feedback/FeedbackCard';
 import { InstallCard } from '@/features/onboarding/IOSInstallPrompt';
+import { WhatsNewCard } from '@/features/onboarding/WhatsNew';
 
 type Section = 'objectif' | 'aliments' | 'semaine' | 'reglages';
 
@@ -80,6 +81,7 @@ export function PlanPage() {
         <>
           {/* Safari iOS seulement : rouvre l'invitation à installer l'app. */}
           <InstallCard />
+          <WhatsNewCard />
           <TargetSafetyPanel />
           <EstimateCarrySettings />
           <DataPanel />

@@ -13,6 +13,7 @@ import { useFoodsStore } from './store/foodsStore';
 import { useLogStore } from './store/logStore';
 import { useWeightStore } from './store/weightStore';
 import { IOSInstallPrompt } from './features/onboarding/IOSInstallPrompt';
+import { WhatsNew } from './features/onboarding/WhatsNew';
 
 function FullScreenMessage({ children }: { children: ReactNode }) {
   return (
@@ -64,6 +65,7 @@ export function App() {
         <AppRoutes />
       </AppShell>
       <IOSInstallPrompt />
+      <WhatsNew />
     </HashRouter>
   );
 }

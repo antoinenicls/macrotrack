@@ -24,8 +24,8 @@ export default defineConfig({
         short_name: 'MacroTrack',
         description: 'Suivi de diète et recomposition corporelle',
         // Couleurs CLAIRES pour le splash screen iOS / standalone bg
-        theme_color: '#FFFFFF',
-        background_color: '#FFFFFF',
+        theme_color: '#F2F2F7',
+        background_color: '#F2F2F7',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',

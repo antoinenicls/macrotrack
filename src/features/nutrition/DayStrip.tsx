@@ -63,8 +63,8 @@ export function DayStrip({ selectedDate, onSelect, weeks = 2 }: Props) {
               isSelected
                 ? 'bg-brand text-white'
                 : isPast
-                  ? 'bg-surface-hi text-text-muted active:text-text'
-                  : 'bg-surface-hi text-text active:bg-surface',
+                  ? 'bg-white text-text-muted active:text-text'
+                  : 'bg-white text-text',
               !isSelected && isToday ? 'ring-1 ring-brand/60' : ''
             ].join(' ')}
           >

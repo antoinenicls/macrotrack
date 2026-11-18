@@ -38,10 +38,10 @@ export function AppShell({ children }: Props) {
 
   return (
     <div
-      className="mx-auto flex w-full max-w-md flex-col bg-white"
+      className="mx-auto flex w-full max-w-md flex-col bg-bg"
       style={{ height: 'var(--vh)', paddingTop: TOP_EDGE }}
     >
-      <div aria-hidden className="fixed inset-x-0 top-0 z-30 bg-white" style={{ height: TOP_EDGE }} />
+      <div aria-hidden className="fixed inset-x-0 top-0 z-30 bg-bg" style={{ height: TOP_EDGE }} />
       <main ref={mainRef} className="scroll-area flex-1 min-h-0" style={{ overflowX: 'clip' }}>
         {children}
       </main>

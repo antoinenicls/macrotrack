@@ -14,7 +14,7 @@ interface Props<T extends string> {
 export function SegmentedControl<T extends string>({ options, value, onChange }: Props<T>) {
   return (
     // Segments façon iOS / GymTrack : piste grise, segment actif blanc en relief, texte bleu.
-    <div className="flex w-full gap-1 rounded-xl bg-alt p-1">
+    <div className="flex w-full gap-1 rounded-xl bg-black/[0.06] p-1">
       {options.map((o) => {
         const active = o.value === value;
         return (

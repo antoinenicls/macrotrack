@@ -4,8 +4,9 @@
 
 /* ===========================================================================
  *  Palette commune à GymTrack — LIGHT ONLY.
- *  Fond blanc, cartes blanches à filet fin (pas d'ombre), gris « alt » pour les
- *  champs et segments, bleu #0A84FF. iOS Safari force-light via color-scheme + meta.
+ *  Fond gris « groupé » d'iOS et cartes blanches à filet fin : chaque bloc se détache
+ *  nettement (les écrans de MacroTrack sont plus denses que ceux de GymTrack, sur fond
+ *  blanc tout se confondait). Gris « alt » pour les champs, bleu #0A84FF. iOS Safari force-light via color-scheme + meta.
  * =========================================================================== */
 :root {
   color-scheme: light only;
@@ -15,7 +16,7 @@
   --vh: 100dvh;
 
   /* —— Surfaces —— */
-  --c-bg:         255 255 255;  /* #FFFFFF */
+  --c-bg:         242 242 247;  /* #F2F2F7 — fond « groupé » d'iOS : les cartes blanches s'en détachent */
   --c-surface:    255 255 255;  /* cartes */
   --c-surface-hi: 245 245 247;  /* #F5F5F7 — champs, segments, pastilles */
   --c-border:     236 236 238;  /* ≈ rgba(0,0,0,.07) sur blanc */
@@ -60,7 +61,7 @@
 html {
   font-size: 17px;
   color-scheme: light only;
-  background-color: #FFFFFF;
+  background-color: #F2F2F7;
   /* Coupe le rebond élastique de la page : l'app doit se sentir rigide, comme du
      natif. Seule la zone de contenu (<main>) défile. */
   overscroll-behavior: none;
@@ -79,7 +80,7 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #FFFFFF;
+  background-color: #F2F2F7;
   color: #1D1D1F;
   overscroll-behavior: contain;
   /* Pas de sélection accidentelle en enchaînant les taps. */
@@ -87,7 +88,7 @@ body {
   user-select: none;
 }
 
-#root { background-color: #FFFFFF; }
+#root { background-color: #F2F2F7; }
 
 /* Là où l'on a une vraie raison de sélectionner du texte. */
 input, textarea, [data-selectable] { -webkit-user-select: text; user-select: text; }
@@ -192,7 +193,7 @@ input[type='number'] { -moz-appearance: textfield; }
  *  Valeurs en dur des classes critiques : garantit le rendu clair même si une
  *  variable CSS manque (ancien cache, mode sombre forcé d'iOS).
  * =========================================================================== */
-.bg-bg            { background-color: #FFFFFF !important; }
+.bg-bg            { background-color: #F2F2F7 !important; }
 .bg-surface       { background-color: #FFFFFF !important; }
 .bg-surface-hi    { background-color: #F5F5F7 !important; }
 .text-text        { color: #1D1D1F !important; }

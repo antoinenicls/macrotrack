@@ -123,7 +123,7 @@ export function ExplanationsPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Rechercher : séance, resto, protéines…"
-            className={`w-full h-12 pl-11 pr-12 rounded-xl bg-alt text-[16px] text-text placeholder:text-text-faint transition-colors focus:bg-brand-soft [&::-webkit-search-cancel-button]:appearance-none ${FOCUS_RING}`}
+            className={`w-full h-12 pl-11 pr-12 rounded-xl bg-white border border-border text-[16px] text-text placeholder:text-text-faint transition-colors focus:bg-brand-soft [&::-webkit-search-cancel-button]:appearance-none ${FOCUS_RING}`}
           />
           {query && (
             <button
@@ -149,7 +149,7 @@ export function ExplanationsPage() {
                   aria-pressed={active}
                   className={[
                     'pressable min-h-[38px] px-3.5 rounded-pill text-[13px] font-semibold inline-flex items-center gap-1.5 transition-colors',
-                    active ? 'bg-brand text-white' : 'bg-alt text-text-muted',
+                    active ? 'bg-brand text-white' : 'bg-white text-text-muted border border-border',
                     FOCUS_RING
                   ].join(' ')}
                 >

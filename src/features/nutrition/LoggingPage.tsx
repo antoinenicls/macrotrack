@@ -179,7 +179,7 @@ export function LoggingPage() {
       {/* Bouton vue semaine — en haut comme demandé, accessible toujours */}
       <button
         onClick={() => setWeekOpen(true)}
-        className="w-full flex items-center gap-3 bg-surface-hi rounded-2xl border border-border p-3 tap active:bg-surface"
+        className="w-full flex items-center gap-3 bg-white rounded-card border border-border p-3 tap"
       >
         <div className="rounded-xl bg-brand/15 text-brand p-2">
           <CalendarRange size={18} />
@@ -240,7 +240,7 @@ export function LoggingPage() {
         ) : (
           <button
             onClick={() => setEditMode(true)}
-            className="w-full flex items-center justify-center gap-2 rounded-2xl border border-dashed border-border py-3 text-sm font-medium text-text-muted active:bg-surface-hi tap"
+            className="w-full flex items-center justify-center gap-2 rounded-card border border-dashed border-black/15 py-3 text-sm font-semibold text-text-muted tap"
           >
             <Lock size={15} /> Voulez-vous faire une modification ?
           </button>

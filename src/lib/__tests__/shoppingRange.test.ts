@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  remainingStartOptions, defaultRemainingStart, validRemainingStart, sessionsLeftInRange
+  remainingStartOptions, defaultRemainingStart, validRemainingStart, validRemainingEnd, sessionsLeftInRange
 } from '../shoppingRange';
 
 const WEEK = ['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-20', '2026-11-21', '2026-11-22'];
@@ -32,6 +32,22 @@ describe('validRemainingStart', () => {
   });
   it('oublie un départ passé', () => {
     expect(validRemainingStart('2026-11-17', WEEK.slice(2))).toBeNull();
+  });
+});
+
+describe('validRemainingEnd', () => {
+  const opts = WEEK.slice(2);
+  it('garde une fin après le départ', () => {
+    expect(validRemainingEnd('2026-11-20', opts, '2026-11-18')).toBe('2026-11-20');
+  });
+  it('fin le jour même du départ', () => {
+    expect(validRemainingEnd('2026-11-18', opts, '2026-11-18')).toBe('2026-11-18');
+  });
+  it('oublie une fin avant le départ', () => {
+    expect(validRemainingEnd('2026-11-19', opts, '2026-11-20')).toBeNull();
+  });
+  it('sans départ → null', () => {
+    expect(validRemainingEnd('2026-11-20', opts, null)).toBeNull();
   });
 });
 

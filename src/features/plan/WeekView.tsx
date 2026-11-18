@@ -26,7 +26,9 @@ import { ShoppingAddBar } from './ShoppingAddBar';
 import { toBuyGrams, isFullyStocked } from '@/lib/pantry';
 import { isTrainingDay, pendingTrainingItems, DEFAULT_SESSIONS_PER_WEEK } from '@/lib/trainingDay';
 import { isDiscrete } from '@/lib/portions';
-import { remainingStartOptions, defaultRemainingStart, validRemainingStart, sessionsLeftInRange } from '@/lib/shoppingRange';
+import {
+  remainingStartOptions, defaultRemainingStart, validRemainingStart, validRemainingEnd, sessionsLeftInRange
+} from '@/lib/shoppingRange';
 
 interface Props {
   open: boolean;
@@ -162,22 +164,38 @@ export function WeekView({ open, onClose }: Props) {
     () => (isShoppingWeek ? remainingStartOptions(dates, today) : []),
     [isShoppingWeek, dates, today]
   );
+  // `restTo` : dernier jour compté (null = dimanche), pour sauter des jours hors diète.
   const restKey = `mt-courses-from-${dates[0]}`;
+  const restEndKey = `mt-courses-to-${dates[0]}`;
   const [restFrom, setRestFromState] = useState<string | null>(null);
+  const [restTo, setRestToState] = useState<string | null>(null);
   useEffect(() => {
     if (!open) return;
     let saved: string | null = null;
-    try { saved = localStorage.getItem(restKey); } catch { /* noop */ }
-    setRestFromState(validRemainingStart(saved, restOptions));
-  }, [open, restKey, restOptions]);
+    let savedEnd: string | null = null;
+    try { saved = localStorage.getItem(restKey); savedEnd = localStorage.getItem(restEndKey); } catch { /* noop */ }
+    const from = validRemainingStart(saved, restOptions);
+    setRestFromState(from);
+    setRestToState(validRemainingEnd(savedEnd, restOptions, from));
+  }, [open, restKey, restEndKey, restOptions]);
+  const persist = (key: string, d: string | null) => {
+    try {
+      if (d) localStorage.setItem(key, d); else localStorage.removeItem(key);
+    } catch { /* noop */ }
+  };
+  const setRestTo = (d: string | null) => { setRestToState(d); persist(restEndKey, d); };
   const setRestFrom = (d: string | null) => {
     setRestFromState(d);
-    try {
-      if (d) localStorage.setItem(restKey, d); else localStorage.removeItem(restKey);
-    } catch { /* noop */ }
+    persist(restKey, d);
+    // Fin avant le nouveau départ : on revient à « jusqu'à dimanche ».
+    if (restTo && (!d || restTo < d)) setRestTo(null);
   };
   const fromDate = restOptions.length > 0 ? restFrom : null;
   const isRest = fromDate !== null;
+  const toDate = isRest ? restTo : null;
+  const lastDay = dates[dates.length - 1];
+  const endLabel = format(new Date(`${toDate ?? lastDay}T12:00:00`), 'EEEE', { locale: fr });
+  const dayChip = (d: string) => (d === today ? 'auj.' : format(new Date(`${d}T12:00:00`), 'EEE', { locale: fr }));
 
   // Clé par vraie semaine → reset auto ; coches à part pour un réassort (sinon ce qu'on a
   // pris lundi resterait « dans le panier » alors qu'il faut en racheter).
@@ -399,9 +417,11 @@ export function WeekView({ open, onClose }: Props) {
   // compté en entier sur le plan type, même déjà entamé).
   const rangeDays = useMemo(
     () => (fromDate
-      ? days.filter((d) => d.date >= fromDate).map((d) => (d.date === today ? { ...d, meals: d.plannedMeals } : d))
+      ? days
+          .filter((d) => d.date >= fromDate && (!toDate || d.date <= toDate))
+          .map((d) => (d.date === today ? { ...d, meals: d.plannedMeals } : d))
       : days),
-    [days, fromDate, today]
+    [days, fromDate, toDate, today]
   );
   const sessionsLeft = useMemo(() => {
     const inRange = rangeDays.filter((d) => isTrainingDay(d.meals)).length;
@@ -683,7 +703,7 @@ export function WeekView({ open, onClose }: Props) {
               suffix="g"
               min={0}
               placeholder="0"
-              hint={`Ce que tu as déjà à la maison · besoin ${isRest ? "d'ici dimanche" : 'de la semaine'} : ${fmtBuy(need)}`}
+              hint={`Ce que tu as déjà à la maison · besoin ${isRest ? `jusqu'à ${endLabel}` : 'de la semaine'} : ${fmtBuy(need)}`}
             />
             <div className="flex flex-wrap items-center gap-2">
               {serving && (
@@ -794,25 +814,37 @@ export function WeekView({ open, onClose }: Props) {
                 { value: 'rest', label: "Ce qu'il reste" }
               ]}
             />
-            {isRest && (
-              <div className="flex flex-wrap items-center gap-1.5 px-1">
-                <span className="text-xs font-semibold text-text-muted mr-0.5">Dès</span>
-                {restOptions.map((d) => {
-                  const active = d === fromDate;
-                  return (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => { if (!active) { haptic('selection'); setRestFrom(d); } }}
-                      aria-pressed={active}
-                      className={`h-8 px-3 rounded-full text-sm font-medium tap transition-colors ${
-                        active ? 'bg-brand text-white' : 'bg-surface-hi text-text-muted'
-                      }`}
-                    >
-                      {d === today ? 'auj.' : format(new Date(`${d}T12:00:00`), 'EEE', { locale: fr })}
-                    </button>
-                  );
-                })}
+            {isRest && fromDate && (
+              <div className="space-y-1.5 px-1">
+                {[
+                  { label: 'Dès', opts: restOptions, value: fromDate, pick: (d: string) => setRestFrom(d) },
+                  {
+                    label: "Jusqu'à",
+                    opts: restOptions.filter((d) => d >= fromDate),
+                    value: toDate ?? lastDay,
+                    pick: (d: string) => setRestTo(d === lastDay ? null : d)
+                  }
+                ].map((row) => (
+                  <div key={row.label} className="flex flex-wrap items-center gap-1.5">
+                    <span className="w-14 shrink-0 text-xs font-semibold text-text-muted">{row.label}</span>
+                    {row.opts.map((d) => {
+                      const active = d === row.value;
+                      return (
+                        <button
+                          key={d}
+                          type="button"
+                          onClick={() => { if (!active) { haptic('selection'); row.pick(d); } }}
+                          aria-pressed={active}
+                          className={`h-8 px-3 rounded-full text-sm font-medium tap transition-colors ${
+                            active ? 'bg-brand text-white' : 'bg-surface-hi text-text-muted'
+                          }`}
+                        >
+                          {dayChip(d)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
               </div>
             )}
           </div>

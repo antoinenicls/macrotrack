@@ -29,6 +29,14 @@ export function validRemainingStart(saved: string | null, options: string[]): st
 }
 
 /**
+ * Dernier jour mémorisé encore valable (dans la semaine et pas avant le départ), sinon null
+ * (= jusqu'à la fin de la semaine). Sert à sauter des jours hors diète (déplacement, resto).
+ */
+export function validRemainingEnd(saved: string | null, options: string[], from: string | null): string | null {
+  return saved && from && options.includes(saved) && saved >= from ? saved : null;
+}
+
+/**
  * Séances encore à prévoir sur la période : l'objectif de la semaine moins celles déjà
  * comptées (avant la période, ou déclarées dans un jour de la période), au plus une par
  * jour restant.

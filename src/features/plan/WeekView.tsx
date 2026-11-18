@@ -26,6 +26,7 @@ import { ShoppingAddBar } from './ShoppingAddBar';
 import { toBuyGrams, isFullyStocked } from '@/lib/pantry';
 import { isTrainingDay, pendingTrainingItems, DEFAULT_SESSIONS_PER_WEEK } from '@/lib/trainingDay';
 import { isDiscrete } from '@/lib/portions';
+import { remainingStartOptions, defaultRemainingStart, validRemainingStart, sessionsLeftInRange } from '@/lib/shoppingRange';
 
 interface Props {
   open: boolean;
@@ -39,7 +40,11 @@ interface DayPlan {
   meals: Array<{ slot: MealSlot; items: Array<{ foodId: string; grams: number; cooked: boolean }> }>;
   /** "logged" si les meals viennent de la DB (jour passé/présent loggé), "planned" sinon. */
   source: 'logged' | 'planned';
+  /** Plan type du jour, même s'il est loggé : « ce qu'il reste » compte aujourd'hui en entier. */
+  plannedMeals: DayPlan['meals'];
 }
+
+type RangeKind = 'all' | 'rest';
 
 /** Aggrège les besoins de la semaine par aliment, en équivalent natif (raw généralement). */
 interface AggregateLine {
@@ -149,7 +154,34 @@ export function WeekView({ open, onClose }: Props) {
   // Les courses ne se cochent que pour la semaine active (celle qu'on prépare),
   // pas pour la semaine d'après dont on ne fait pas encore les courses.
   const isShoppingWeek = week === 'this';
-  const storageKey = `mt-courses-checked-${dates[0]}`; // clé par vraie semaine → reset auto
+
+  // « Ce qu'il reste » : réassort en milieu de semaine, la liste ne compte que les jours
+  // à partir de `restFrom`. Choix mémorisé pour la semaine (survit à une fermeture en magasin).
+  const today = todayKey();
+  const restOptions = useMemo(
+    () => (isShoppingWeek ? remainingStartOptions(dates, today) : []),
+    [isShoppingWeek, dates, today]
+  );
+  const restKey = `mt-courses-from-${dates[0]}`;
+  const [restFrom, setRestFromState] = useState<string | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    let saved: string | null = null;
+    try { saved = localStorage.getItem(restKey); } catch { /* noop */ }
+    setRestFromState(validRemainingStart(saved, restOptions));
+  }, [open, restKey, restOptions]);
+  const setRestFrom = (d: string | null) => {
+    setRestFromState(d);
+    try {
+      if (d) localStorage.setItem(restKey, d); else localStorage.removeItem(restKey);
+    } catch { /* noop */ }
+  };
+  const fromDate = restOptions.length > 0 ? restFrom : null;
+  const isRest = fromDate !== null;
+
+  // Clé par vraie semaine → reset auto ; coches à part pour un réassort (sinon ce qu'on a
+  // pris lundi resterait « dans le panier » alors qu'il faut en racheter).
+  const storageKey = `mt-courses-checked-${dates[0]}${fromDate ? `-from-${fromDate}` : ''}`;
   /** Semaine de courses en cours (son lundi) : marque les articles « en plus » pris. */
   const shoppingWeekKey = dayKey(anchorMonday);
 
@@ -340,23 +372,20 @@ export function WeekView({ open, onClose }: Props) {
       const today = todayKey();
       const result: DayPlan[] = [];
       for (const d of dates) {
+        // Plan type — choisit le template du jour (rotation hebdo si configurée), allégé
+        // d'un éventuel report de repas estimé des jours précédents.
+        const tpl = getTemplateForDate(d, settings);
+        const tplForDay = applyCarryOver(tpl, carryOverFor(d, settings.estimateSurplus, planKcal(tpl, byId), carrySettingsOf(settings)), byId);
+        const plannedMeals = tplForDay.map((t) => ({ slot: t.slot, items: t.items }));
         const isPastOrToday = d <= today;
         if (isPastOrToday) {
           const meals = await mealsRepo.byDate(d);
           if (meals.length > 0 && meals.some((m) => m.items.length > 0)) {
-            result.push({ date: d, meals: meals.map((m) => ({ slot: m.slot, items: m.items })), source: 'logged' });
+            result.push({ date: d, meals: meals.map((m) => ({ slot: m.slot, items: m.items })), source: 'logged', plannedMeals });
             continue;
           }
         }
-        // Sinon plan type — choisit le template du jour (rotation hebdo si configurée), allégé
-        // d'un éventuel report de repas estimé des jours précédents.
-        const tpl = getTemplateForDate(d, settings);
-        const tplForDay = applyCarryOver(tpl, carryOverFor(d, settings.estimateSurplus, planKcal(tpl, byId), carrySettingsOf(settings)), byId);
-        result.push({
-          date: d,
-          meals: tplForDay.map((t) => ({ slot: t.slot, items: t.items })),
-          source: 'planned'
-        });
+        result.push({ date: d, meals: plannedMeals, source: 'planned', plannedMeals });
       }
       if (!cancelled) setDays(result);
     })();
@@ -366,7 +395,19 @@ export function WeekView({ open, onClose }: Props) {
   // Séances de la semaine : celles déjà présentes dans un jour (faites ou déclarées) sont
   // comptées par leurs aliments ; les autres sont ajoutées à la liste (bloc pré-training).
   const sessionsPerWeek = settings?.trainingSessionsPerWeek ?? DEFAULT_SESSIONS_PER_WEEK;
-  const sessionsCounted = days.filter((d) => isTrainingDay(d.meals)).length;
+  // Jours comptés dans la liste : toute la semaine, ou seulement ceux qui restent (aujourd'hui
+  // compté en entier sur le plan type, même déjà entamé).
+  const rangeDays = useMemo(
+    () => (fromDate
+      ? days.filter((d) => d.date >= fromDate).map((d) => (d.date === today ? { ...d, meals: d.plannedMeals } : d))
+      : days),
+    [days, fromDate, today]
+  );
+  const sessionsLeft = useMemo(() => {
+    const inRange = rangeDays.filter((d) => isTrainingDay(d.meals)).length;
+    const before = fromDate ? days.filter((d) => d.date < fromDate && isTrainingDay(d.meals)).length : 0;
+    return sessionsLeftInRange(sessionsPerWeek, before, inRange, rangeDays.length);
+  }, [days, rangeDays, fromDate, sessionsPerWeek]);
   const setSessionsPerWeek = (n: number) => {
     if (!settings) return;
     haptic('selection');
@@ -389,16 +430,15 @@ export function WeekView({ open, onClose }: Props) {
         seen.add(it.foodId);
       }
     };
-    for (const day of days) {
+    for (const day of rangeDays) {
       const seenToday = new Set<string>();
       for (const meal of day.meals) for (const it of meal.items) add(it, seenToday, 1);
     }
-    const extra = pendingTrainingItems(sessionsPerWeek, sessionsCounted);
-    const left = Math.max(0, sessionsPerWeek - sessionsCounted);
+    const extra = pendingTrainingItems(sessionsLeft, 0);
     const seenExtra = new Set<string>();
-    for (const it of extra) add(it, seenExtra, left);
+    for (const it of extra) add(it, seenExtra, sessionsLeft);
     return Array.from(map.values());
-  }, [days, byId, sessionsPerWeek, sessionsCounted]);
+  }, [rangeDays, byId, sessionsLeft]);
 
   // Regroupe la liste de courses par rayon (ordre de parcours en magasin). Les articles
   // ajoutés à la main ne concernent que la semaine de courses (pas l'aperçu d'après).
@@ -427,8 +467,6 @@ export function WeekView({ open, onClose }: Props) {
       return { date: day.date, totals, source: day.source, meals: day.meals };
     });
   }, [days, byId]);
-
-  const today = todayKey();
 
   /** État d'une ligne de courses : besoin, stock, et si elle est "réglée" (prise ou déjà en stock). */
   interface LineStatus {
@@ -645,7 +683,7 @@ export function WeekView({ open, onClose }: Props) {
               suffix="g"
               min={0}
               placeholder="0"
-              hint={`Ce que tu as déjà à la maison · besoin de la semaine : ${fmtBuy(need)}`}
+              hint={`Ce que tu as déjà à la maison · besoin ${isRest ? "d'ici dimanche" : 'de la semaine'} : ${fmtBuy(need)}`}
             />
             <div className="flex flex-wrap items-center gap-2">
               {serving && (
@@ -744,6 +782,41 @@ export function WeekView({ open, onClose }: Props) {
             </div>
           </div>
         </div>
+
+        {/* Réassort en milieu de semaine : seulement ce qu'il reste à manger */}
+        {restOptions.length > 0 && (
+          <div className="space-y-2">
+            <SegmentedControl<RangeKind>
+              value={isRest ? 'rest' : 'all'}
+              onChange={(v) => setRestFrom(v === 'rest' ? (restFrom ?? defaultRemainingStart(restOptions, today)) : null)}
+              options={[
+                { value: 'all', label: 'Toute la semaine' },
+                { value: 'rest', label: "Ce qu'il reste" }
+              ]}
+            />
+            {isRest && (
+              <div className="flex flex-wrap items-center gap-1.5 px-1">
+                <span className="text-xs font-semibold text-text-muted mr-0.5">Dès</span>
+                {restOptions.map((d) => {
+                  const active = d === fromDate;
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => { if (!active) { haptic('selection'); setRestFrom(d); } }}
+                      aria-pressed={active}
+                      className={`h-8 px-3 rounded-full text-sm font-medium tap transition-colors ${
+                        active ? 'bg-brand text-white' : 'bg-surface-hi text-text-muted'
+                      }`}
+                    >
+                      {d === today ? 'auj.' : format(new Date(`${d}T12:00:00`), 'EEE', { locale: fr })}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Résumé : ce qu'il reste à prendre + progression */}
         {total > 0 && (

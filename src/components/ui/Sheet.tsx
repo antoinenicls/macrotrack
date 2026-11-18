@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import type { ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
+import { useSheetDrag } from './useSheetDrag';
 
 interface Props {
   open: boolean;
@@ -32,6 +33,11 @@ export function Sheet({ open, onClose, title, children, fullScreen = false }: Pr
   // Décalage de la zone visible : à l'ouverture du clavier, iOS fait défiler la page pour
   // montrer le champ (offsetTop > 0) même si le body est figé.
   const [vvTop, setVvTop] = useState(0);
+
+  // Glisser vers le bas pour fermer (bottom-sheet seulement : la plein écran a sa croix).
+  const panelRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useSheetDrag(panelRef, scrollRef, onClose, open && !fullScreen);
 
   useEffect(() => {
     const vv = window.visualViewport;
@@ -94,8 +100,8 @@ export function Sheet({ open, onClose, title, children, fullScreen = false }: Pr
             role="dialog"
             aria-modal="true"
             className={[
-              'fixed inset-x-0 bottom-0 z-50 bg-surface border-t border-border flex flex-col',
-              fullScreen ? 'top-0 rounded-none border-t-0' : 'rounded-t-3xl max-h-[88vh]'
+              'fixed inset-x-0 bottom-0 z-50 flex flex-col',
+              fullScreen ? 'top-0' : 'max-h-[88vh]'
             ].join(' ')}
             style={
               fullScreen && vvHeight != null
@@ -120,9 +126,21 @@ export function Sheet({ open, onClose, title, children, fullScreen = false }: Pr
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 280 }}
           >
+            {/* Panneau visible. Distinct du conteneur animé : le glissement vers le bas
+                le décale lui (style inline), sans entrer en conflit avec l'animation
+                d'entrée / sortie de framer-motion sur le conteneur. */}
+            <div
+              ref={panelRef}
+              className={[
+                'flex flex-col flex-1 min-h-0 bg-surface',
+                fullScreen ? '' : 'rounded-t-3xl border-t border-border'
+              ].join(' ')}
+            >
             {/* Header — fixe en haut */}
             <div className={['relative px-4 shrink-0', fullScreen ? 'pt-safe' : ''].join(' ')}>
-              <div className="pt-4">
+              {/* Poignée : indique que la feuille se ferme en glissant vers le bas */}
+              {!fullScreen && <div aria-hidden className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-border" />}
+              <div className={fullScreen ? 'pt-4' : 'pt-1'}>
                 <div className="flex items-center">
                   {title && <h3 className="font-semibold text-base">{title}</h3>}
                   <button
@@ -138,6 +156,7 @@ export function Sheet({ open, onClose, title, children, fullScreen = false }: Pr
 
             {/* Contenu scrollable — prend la hauteur restante */}
             <div
+              ref={scrollRef}
               className="flex-1 min-h-0 overflow-y-auto px-4 pt-2"
               style={{
                 overscrollBehavior: 'contain',
@@ -147,6 +166,7 @@ export function Sheet({ open, onClose, title, children, fullScreen = false }: Pr
               }}
             >
               {children}
+            </div>
             </div>
           </motion.div>
         </>

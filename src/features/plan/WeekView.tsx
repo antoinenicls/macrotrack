@@ -789,7 +789,9 @@ export function WeekView({ open, onClose }: Props) {
           <div className="px-1 text-xs font-semibold text-text-muted">
             Jours comptés <span className="font-medium tabular-nums">· {dates.length - skips.size}/{dates.length}</span>
           </div>
-          <div className="grid grid-cols-7 gap-1">
+          {/* Pas d'espace mort entre les cases : chaque bouton couvre toute sa colonne (l'écart
+              visuel est un padding interne), et la case s'enfonce au toucher. */}
+          <div className="grid grid-cols-7 -mx-0.5">
             {dates.map((d) => {
               const on = !skips.has(d);
               const date = new Date(`${d}T12:00:00`);
@@ -800,13 +802,17 @@ export function WeekView({ open, onClose }: Props) {
                   onClick={() => tapDay(d)}
                   aria-pressed={on}
                   aria-label={`${formatHumanDate(d)}${on ? '' : ' (retiré)'}`}
-                  className={`relative h-12 rounded-xl flex flex-col items-center justify-center gap-0.5 tap transition-colors ${
-                    on ? 'bg-brand/10 text-brand' : 'bg-surface-hi text-text-muted/50'
-                  }`}
+                  className="group h-12 p-0.5 touch-manipulation select-none"
                 >
-                  <span className="text-[10px] font-semibold uppercase leading-none">{format(date, 'EEEEE', { locale: fr })}</span>
-                  <span className={`text-sm font-bold tabular-nums leading-none ${on ? '' : 'line-through'}`}>{format(date, 'd')}</span>
-                  {d === today && <span className="absolute bottom-1 w-1 h-1 rounded-full bg-current" />}
+                  <span
+                    className={`relative h-full rounded-xl flex flex-col items-center justify-center gap-0.5 transition-[transform,background-color,color] duration-100 group-active:scale-90 ${
+                      on ? 'bg-brand/10 text-brand' : 'bg-surface-hi text-text-muted/50'
+                    }`}
+                  >
+                    <span className="text-[10px] font-semibold uppercase leading-none">{format(date, 'EEEEE', { locale: fr })}</span>
+                    <span className={`text-sm font-bold tabular-nums leading-none ${on ? '' : 'line-through'}`}>{format(date, 'd')}</span>
+                    {d === today && <span className="absolute bottom-1 w-1 h-1 rounded-full bg-current" />}
+                  </span>
                 </button>
               );
             })}
